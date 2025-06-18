@@ -1,0 +1,537 @@
+'use client';
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { FoodCategory } from "@/interface/foodTypes";
+import { addFoodItem } from "@/action/foodItem/addFoodItem";
+import Image from "next/image";
+import { IoMdAddCircle } from "react-icons/io";
+import useCategories from "@/components/useCategories";
+import Loader from "@/components/loader";
+import toast from "react-hot-toast";
+
+type PortionPrice = {
+  portion: string;
+  price: string;
+};
+
+export default function AddFoodItem() {
+  const router = useRouter();
+  const { categories: dynamicCats, loading: catsLoading } = useCategories();
+
+  const [ingredientInput, setIngredientInput] = useState("");
+  const [newPortion, setNewPortion] = useState<PortionPrice>({ portion: "", price: "" });
+  const [loading, setLoading] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  const [formData, setFormData] = useState({
+    name: "",
+    category: "" as FoodCategory,
+    details: "",
+    ingredients: [] as string[],
+    portionPrices: [{ portion: "", price: "" }],
+    preparationTime: "",
+    available: false,
+    images: [] as File[],
+    videos: [] as File[],
+    imagePreviews: [] as string[],
+    videoPreviews: [] as string[],
+  });
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const target = e.target;
+    if (target instanceof HTMLInputElement && target.type === "checkbox") {
+      setFormData(prev => ({ ...prev, [target.name]: target.checked }));
+    } else if (target instanceof HTMLInputElement && target.type === "file" && target.multiple) {
+      const files = Array.from(target.files || []);
+      const images: File[] = [];
+      const videos: string[] = [];
+
+      files.forEach(file => {
+        const url = URL.createObjectURL(file);
+        if (file.type.startsWith("video/")) {
+          videos.push(url);
+        } else {
+          images.push(file);
+        }
+      });
+
+      setFormData(prev => ({
+        ...prev,
+        images: [...prev.images, ...files],
+        imagePreviews: [...prev.imagePreviews, ...images.map(img => URL.createObjectURL(img))],
+        videoPreviews: [...prev.videoPreviews, ...videos],
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, [target.name]: target.value }));
+    }
+  };
+
+  const handleAddIngredient = () => {
+    if (ingredientInput.trim()) {
+      const newIngredients = ingredientInput
+        .split(", ")
+        .map(i => i.trim())
+        .filter(i => i.length > 0)
+      setFormData(prev => ({
+        ...prev,
+        ingredients: [...prev.ingredients, ...newIngredients],
+      }));
+      setIngredientInput("");
+    }
+  };
+
+  const handleRemoveIngredient = (ingredient: string) => {
+    setFormData(prev => ({
+      ...prev,
+      ingredients: prev.ingredients.filter(item => item !== ingredient),
+    }));
+  };
+
+  const handlePortionChange = (index: number, field: "portion" | "price", value: string) => {
+    const updated = [...formData.portionPrices];
+    updated[index][field] = value;
+    setFormData(prev => ({ ...prev, portionPrices: updated }));
+  };
+
+  const addPortion = (portionObj?: { portion: string; price: string }) => {
+    setFormData(prev => {
+      const cleanedPortions = prev.portionPrices.filter(
+        (p) => p.portion.trim() !== "" && p.price.trim() !== ""
+      );
+      return {
+        ...prev,
+        portionPrices: [...cleanedPortions, portionObj || { portion: "", price: "" }],
+      };
+    });
+  };
+
+  const removePortion = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      portionPrices: prev.portionPrices.filter((_, i) => i !== index),
+    }));
+  };
+
+  const resetForm = () => {
+    const confirmed = window.confirm("Are you sure you want to reset the form?");
+    if (!confirmed) return;
+    setFormData({
+      name: "",
+      category: "" as FoodCategory,
+      details: "",
+      ingredients: [],
+      portionPrices: [{ portion: "", price: "" }],
+      preparationTime: "",
+      available: false,
+      images: [],
+      videos: [],
+      imagePreviews: [],
+      videoPreviews: [],
+    });
+    setIngredientInput("");
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const files = Array.from(e.dataTransfer.files);
+    const images: File[] = [];
+    const videos: string[] = [];
+
+    files.forEach(file => {
+      const url = URL.createObjectURL(file);
+      if (file.type.startsWith("video/")) {
+        videos.push(url);
+      } else {
+        images.push(file);
+      }
+    });
+
+    setFormData(prev => ({
+      ...prev,
+      images: [...prev.images, ...files],
+      imagePreviews: [...prev.imagePreviews, ...images.map(img => URL.createObjectURL(img))],
+      videoPreviews: [...prev.videoPreviews, ...videos],
+    }));
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setFormData(prev => {
+      const newImages = [...prev.images];
+      const newPreviews = [...prev.imagePreviews];
+      newImages.splice(index, 1);
+      newPreviews.splice(index, 1);
+      return { ...prev, images: newImages, imagePreviews: newPreviews };
+    });
+  };
+
+  const handleRemoveVideo = (index: number) => {
+    setFormData(prev => {
+      const newPreviews = [...prev.videoPreviews];
+      newPreviews.splice(index, 1);
+      return { ...prev, videoPreviews: newPreviews };
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const errors: Record<string, string> = {};
+
+    if (!formData.name.trim()) errors.name = "Item name is required.";
+    if (!formData.category.trim()) errors.category = "Category is required.";
+    if (!formData.details.trim()) errors.details = "Description is required.";
+    if (formData.ingredients.length === 0) errors.ingredients = "At least one ingredient is required.";
+    const validPortions = formData.portionPrices.filter(p => p.portion.trim() && p.price.trim());
+    if (validPortions.length === 0) errors.portions = "At least one valid portion and price is required.";
+    if (!formData.preparationTime) errors.preparationTime = "Preparation time is required.";
+
+    // If errors exist, prevent submission
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      toast.error("Please fix the form errors.");
+      return;
+    }
+
+    setFormErrors({}); // Clear previous errors
+
+    setLoading(true);
+
+    // // Log each field of formData before submission
+    // console.log("Form Submission Payload:");
+    // console.log("Name:", formData.name);
+    // console.log("Category ID:", formData.category);
+    // console.log("Details:", formData.details);
+    // console.log("Ingredients:", formData.ingredients);
+    // console.log("Portion Prices:", formData.portionPrices);
+    // console.log("Preparation Time:", formData.preparationTime);
+    // console.log("Available:", formData.available);
+    // console.log("Images:", formData.images); // These are File objects
+    // console.log("Videos:", formData.videos); // Not being added properly, only previews shown
+    // console.log("Image Previews:", formData.imagePreviews);
+    // console.log("Video Previews:", formData.videoPreviews);
+
+    try {
+      await addFoodItem(formData);
+      toast.success("Food Item Added Successfully!");
+      router.push("/foodItem");
+    } catch (err) {
+      toast.error("Food Item Add Failed!");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div>
+      {/* Page Content */}
+      <div className="overflow-y-auto p-4 sm:p-6 md:p-8">
+        <div className="max-w-3xl mx-auto my-5 rounded-xl space-y-6">
+          <div className="space-y-4 max-w-3xl mx-auto bg-white p-6 rounded-xl shadow">
+            {loading ? (
+              <Loader message="Fetching item data..." />
+            ) : (
+              <form onSubmit={handleSubmit}>
+                <div className="flex justify-between items-center">
+                  <h2 className="text-xl font-semibold mb-4">Add Food Item</h2>
+                  <button type="button"
+                    onClick={resetForm}
+                    className={"text-sm text-gray-300 cursor-not-allowed"}
+                  >
+                    RESET
+                  </button>
+                </div>
+                <div className="mt-3">
+                  <label className="font-semibold">CATEGORIES</label>
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    className="w-full border mt-1 p-2 rounded"
+                    disabled={catsLoading}
+                  >
+                    <option value="">Select</option>
+                    {dynamicCats.map(cat => (
+                      <option key={cat.id_int} value={cat.id_int.toString()}>
+                        
+                        {cat.title}
+                      </option>
+                    ))
+                    }
+                  </select>
+                  {formErrors.category && <p className="text-red-500 text-sm mt-1">{formErrors.category}</p>}
+                </div>
+
+                <div className="mt-3">
+                  <label className="font-semibold">ITEM NAME</label>
+                  <input
+                    type="text"
+                    name="name"
+                    placeholder="Item_name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    className="w-full border mt-1 p-2 rounded"
+                  />
+                  {formErrors.name && <p className="text-red-500 text-sm mt-1">{formErrors.name}</p>}
+
+                </div>
+
+                <div className="mt-3">
+                  <label className="font-semibold">DESCRIPTION</label>
+                  <textarea
+                    name="details"
+                    placeholder="Item_description"
+                    value={formData.details}
+                    onChange={handleChange}
+                    rows={3}
+                    className="w-full border mt-1 p-2 rounded"
+                  />
+                </div>
+
+                <div className="mt-3">
+                  <label className="font-semibold">INGREDIENTS</label>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {formData.ingredients.map(ing => (
+                      <span key={ing} className="bg-orange-100 px-3 py-1 rounded-xl text-sm">
+                        {ing.charAt(0).toUpperCase() + ing.slice(1)}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveIngredient(ing)}
+                          className="ml-2 font-extrabold text-red-500"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex mt-2">
+                    <input
+                      type="text"
+                      placeholder="Item_ingredient"
+                      value={ingredientInput}
+                      onChange={(e) => setIngredientInput(e.target.value)}
+                      className="border p-2 rounded-l w-full"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddIngredient}
+                      className="bg-orange-500 text-white px-4 rounded-r hover:bg-orange-600"
+                    >
+                      ADD
+                    </button>
+                  </div>
+                </div>
+
+                {/* PORTIONS */}
+                <div className="mt-3">
+                  <div className="grid grid-cols-2">
+                    <div className="font-semibold text-lg w-10/12">Portions</div>
+                  </div>
+                  {/* Only display portions that are not empty */}
+                  {formData.portionPrices
+                    .filter(p => p.portion.trim() !== "" && p.price.trim() !== "")
+                    .map((p, idx) => (
+                      <div key={idx} className="flex flex-row gap-4 items-end w-full my-2">
+                        <div className="w-full md:w-1/2">
+                          <input
+                            type="text"
+                            name="portion"
+                            placeholder="Item_portion"
+                            value={p.portion}
+                            onChange={e => handlePortionChange(idx, "portion", e.target.value)}
+                            className="w-full border p-2 rounded mt-1"
+                          />
+                        </div>
+                        <div className="w-full md:w-1/2">
+                          <input
+                            type="number"
+                            name="price"
+                            min="0"
+                            placeholder="Item_price"
+                            value={p.price}
+                            onChange={e => handlePortionChange(idx, "price", e.target.value)}
+                            className="w-full border p-2 rounded mt-1"
+                          />
+                        </div>
+                        <div className="mt-2">
+                          <button
+                            type="button"
+                            onClick={() => removePortion(idx)}
+                            className="text-red-500"
+                            aria-label="Remove portion"
+                          >
+                            <IoMdAddCircle size={28} style={{ transform: "rotate(45deg)" }} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  {/* Input for adding a new portion */}
+                  <div className="flex flex-row gap-4 items-end w-full mt-2">
+                    <div className="w-full md:w-1/2">
+                      <input
+                        type="text"
+                        placeholder="Item_portion"
+                        value={newPortion.portion}
+                        onChange={e => setNewPortion({ ...newPortion, portion: e.target.value })}
+                        className="w-full border p-2 rounded mt-1"
+                      />
+                    </div>
+                    <div className="w-full md:w-1/2">
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="Item_price"
+                        value={newPortion.price}
+                        onChange={e => setNewPortion({ ...newPortion, price: e.target.value })}
+                        className="w-full border p-2 rounded mt-1"
+                      />
+                    </div>
+                    <div className="mt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (newPortion.portion && newPortion.price) {
+                            addPortion(newPortion);
+                            setNewPortion({ portion: "", price: "" });
+                          }
+                        }}
+                        aria-label="Add new portion"
+                        className="text-orange-500"
+                      >
+                        <IoMdAddCircle size={28} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-3">
+                  <label className="font-semibold" htmlFor="upload-image">UPLOAD PHOTO/VIDEO</label>
+                  <div
+                    onDrop={handleDrop}
+                    onDragOver={e => e.preventDefault()}
+                    className="flex gap-4 mt-2 flex-wrap justify-start"
+                  >
+                    <label
+                      className="w-28 h-28 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded cursor-pointer hover:bg-gray-50 transition"
+                    >
+                      <input
+                        id="upload-image"
+                        type="file"
+                        name="images"
+                        accept="image/*,video/*"
+                        multiple
+                        className="hidden"
+                        onChange={handleChange}
+                      />
+                      <div className="flex flex-col items-center text-gray-400">
+                        <div className="bg-orange-100 rounded-full px-3 py-1">
+                          <span className="text-orange-500 text-xl font-bold">+</span>
+                        </div>
+                        <span className="text-sm font-medium">Add</span>
+                      </div>
+                    </label>
+
+                    {/* Image Previews */}
+                    {formData.imagePreviews.map((preview, index) => (
+                      <div key={index} className="relative w-28 h-28">
+                        <Image
+                          src={preview}
+                          alt={`preview-${index}`}
+                          fill
+                          className="rounded object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImage(index)}
+                          className="absolute top-1 right-1 bg-black/100 hover:bg-red-600 text-white rounded-full w-5 h-5 text-xs flex justify-center"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+
+                    {/* Video Previews */}
+                    {formData.videoPreviews.map((preview, index) => (
+                      <div key={`id-${index}`} className="relative w-28 h-28">
+                        <video
+                          src={preview}
+                          className="rounded object-cover w-full h-full"
+                          autoPlay
+                          muted
+                          loop
+                          playsInline
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveVideo(index)}
+                          className="absolute top-1 right-1 bg-black/100 hover:bg-red-600 text-white rounded-full w-5 h-5 text-xs flex justify-center"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+
+                  </div>
+                </div>
+
+                <div className="mt-3">
+                  <label className="font-semibold">PREPARATION TIME</label>
+                  <input
+                    type="number"
+                    name="preparationTime"
+                    placeholder="Item_preparation_time"
+                    max="30"
+                    value={formData.preparationTime}
+                    onChange={handleChange}
+                    className="w-full border mt-1 p-2 rounded"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 mt-3">
+                  <label className="font-semibold">Available</label>
+                  <button
+                    type="button"
+                    role="switch"
+                    name="available"
+                    aria-checked={formData.available}
+                    onClick={() =>
+                      setFormData(prev => ({ ...prev, available: !prev.available }))
+                    }
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 ${formData.available ? 'bg-green-500' : 'bg-gray-300'}`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-300 ${formData.available ? 'translate-x-6' : 'translate-x-1'}`}
+                    />
+                  </button>
+                </div>
+
+                <div className="flex flex-col sm:flex-row justify-between gap-3 pt-5">
+                  <button
+                    type="button"
+                    onClick={() => router.back()}
+                    className="w-full sm:w-auto px-4 py-2 bg-gray-200 rounded"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    onClick={handleSubmit}
+                    className="w-full sm:w-auto px-6 py-2 bg-orange-500 text-white rounded hover:bg-orange-600"
+                  >
+                    Add Item
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+

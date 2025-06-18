@@ -1,0 +1,34 @@
+import { getCookie } from '@/constant/cookie';
+
+export async function addCategory(title: string) {
+    try {
+        // Get token from cookies
+        const token = getCookie('token');
+        console.log(token)
+
+        if (!token) {
+            throw new Error("Unauthorized: No token found");
+        }
+
+        const response = await fetch("https://food-admin.wappzo.com/api/add-category", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            },
+            body : JSON.stringify({ title }),
+        });
+
+        const data = await response.json();
+
+        if(!response.ok) {
+            throw new Error(data.message || "Failed to add category.");
+        }
+        return data;
+    } catch(error) {
+        console.error("Error adding category : ", error)
+        throw error;
+    }
+}
+
+
