@@ -6,7 +6,7 @@ import { FoodCategory } from "@/interface/foodTypes";
 import { addFoodItem } from "@/action/foodItem/addFoodItem";
 import Image from "next/image";
 import { IoMdAddCircle } from "react-icons/io";
-import useCategories from "@/components/useCategories";
+import useCategories from "@/components/foodItem/useCategories";
 import Loader from "@/components/loader";
 import toast from "react-hot-toast";
 
@@ -42,10 +42,19 @@ export default function AddFoodItem() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const target = e.target;
-    if (target instanceof HTMLInputElement && target.type === "checkbox") {
-      setFormData(prev => ({ ...prev, [target.name]: target.checked }));
-    } else if (target instanceof HTMLInputElement && target.type === "file" && target.multiple) {
-      const files = Array.from(target.files || []);
+    const { name, type } = target;
+
+    // Clear the specific field's error
+    setFormErrors(prev => {
+      const updated = { ...prev };
+      delete updated[name];
+      return updated;
+    });
+
+    if (target instanceof HTMLInputElement && type === "checkbox") {
+      setFormData(prev => ({ ...prev, [name]: target.checked }));
+    } else if (target instanceof HTMLInputElement && type === "file" && target.files) {
+      const files = Array.from(target.files);
       const images: File[] = [];
       const videos: string[] = [];
 
@@ -65,7 +74,7 @@ export default function AddFoodItem() {
         videoPreviews: [...prev.videoPreviews, ...videos],
       }));
     } else {
-      setFormData(prev => ({ ...prev, [target.name]: target.value }));
+      setFormData(prev => ({ ...prev, [name]: target.value }));
     }
   };
 
@@ -74,12 +83,19 @@ export default function AddFoodItem() {
       const newIngredients = ingredientInput
         .split(", ")
         .map(i => i.trim())
-        .filter(i => i.length > 0)
+        .filter(i => i.length > 0);
       setFormData(prev => ({
         ...prev,
         ingredients: [...prev.ingredients, ...newIngredients],
       }));
       setIngredientInput("");
+
+      // Clear error for ingredients
+      setFormErrors(prev => {
+        const updated = { ...prev };
+        delete updated.ingredients;
+        return updated;
+      });
     }
   };
 
@@ -94,7 +110,15 @@ export default function AddFoodItem() {
     const updated = [...formData.portionPrices];
     updated[index][field] = value;
     setFormData(prev => ({ ...prev, portionPrices: updated }));
+
+    // Clear portions error
+    setFormErrors(prev => {
+      const updatedErrors = { ...prev };
+      delete updatedErrors.portions;
+      return updatedErrors;
+    });
   };
+
 
   const addPortion = (portionObj?: { portion: string; price: string }) => {
     setFormData(prev => {
@@ -105,6 +129,11 @@ export default function AddFoodItem() {
         ...prev,
         portionPrices: [...cleanedPortions, portionObj || { portion: "", price: "" }],
       };
+    });
+    setFormErrors(prev => {
+      const updated = { ...prev };
+      delete updated.portions;
+      return updated;
     });
   };
 
@@ -195,8 +224,7 @@ export default function AddFoodItem() {
       return;
     }
 
-    setFormErrors({}); // Clear previous errors
-
+    setFormErrors({});
     setLoading(true);
 
     // // Log each field of formData before submission
@@ -237,15 +265,18 @@ export default function AddFoodItem() {
               <form onSubmit={handleSubmit}>
                 <div className="flex justify-between items-center">
                   <h2 className="text-xl font-semibold mb-4">Add Food Item</h2>
+
                   <button type="button"
                     onClick={resetForm}
-                    className={"text-sm text-gray-300 cursor-not-allowed"}
+                    className={"text-sm text-gray-400 hover:text-gray-600 cursor-pointer"}
                   >
                     RESET
                   </button>
                 </div>
                 <div className="mt-3">
-                  <label className="font-semibold">CATEGORIES</label>
+                  <label className="font-semibold">
+                    CATEGORIES <span className="text-red-500 text-lg animate-pulse" aria-hidden="true">*</span>
+                  </label>
                   <select
                     name="category"
                     value={formData.category}
@@ -256,43 +287,48 @@ export default function AddFoodItem() {
                     <option value="">Select</option>
                     {dynamicCats.map(cat => (
                       <option key={cat.id_int} value={cat.id_int.toString()}>
-                        
                         {cat.title}
                       </option>
                     ))
                     }
                   </select>
-                  {formErrors.category && <p className="text-red-500 text-sm mt-1">{formErrors.category}</p>}
+                  {formErrors.category && <p className="text-red-500 text-sm mt-1 font-semibold">{formErrors.category}</p>}
                 </div>
 
                 <div className="mt-3">
-                  <label className="font-semibold">ITEM NAME</label>
+                  <label className="font-semibold">
+                    ITEM NAME <span className="text-red-500 text-lg animate-pulse" aria-hidden="true">*</span>
+                  </label>
                   <input
                     type="text"
                     name="name"
-                    placeholder="Item_name"
+                    placeholder="Item name"
                     value={formData.name}
                     onChange={handleChange}
                     className="w-full border mt-1 p-2 rounded"
                   />
-                  {formErrors.name && <p className="text-red-500 text-sm mt-1">{formErrors.name}</p>}
-
+                  {formErrors.name && <p className="text-red-500 text-sm mt-1 font-semibold">{formErrors.name}</p>}
                 </div>
 
                 <div className="mt-3">
-                  <label className="font-semibold">DESCRIPTION</label>
+                  <label className="font-semibold">
+                    DESCRIPTION <span className="text-red-500 text-lg animate-pulse" aria-hidden="true">*</span>
+                  </label>
                   <textarea
                     name="details"
-                    placeholder="Item_description"
+                    placeholder="Item description"
                     value={formData.details}
                     onChange={handleChange}
                     rows={3}
                     className="w-full border mt-1 p-2 rounded"
                   />
+                  {formErrors.details && <p className="text-red-500 text-sm mt-1 font-semibold">{formErrors.details}</p>}
                 </div>
 
                 <div className="mt-3">
-                  <label className="font-semibold">INGREDIENTS</label>
+                  <label className="font-semibold">
+                    INGREDIENTS <span className="text-red-500 text-lg animate-pulse" aria-hidden="true">*</span>
+                  </label>
                   <div className="flex flex-wrap gap-2 mt-1">
                     {formData.ingredients.map(ing => (
                       <span key={ing} className="bg-orange-100 px-3 py-1 rounded-xl text-sm">
@@ -310,7 +346,7 @@ export default function AddFoodItem() {
                   <div className="flex mt-2">
                     <input
                       type="text"
-                      placeholder="Item_ingredient"
+                      placeholder="Item ingredient"
                       value={ingredientInput}
                       onChange={(e) => setIngredientInput(e.target.value)}
                       className="border p-2 rounded-l w-full"
@@ -323,12 +359,15 @@ export default function AddFoodItem() {
                       ADD
                     </button>
                   </div>
+                  {formErrors.ingredients && <p className="text-red-500 text-sm mt-1 font-semibold">{formErrors.ingredients}</p>}
                 </div>
 
                 {/* PORTIONS */}
                 <div className="mt-3">
                   <div className="grid grid-cols-2">
-                    <div className="font-semibold text-lg w-10/12">Portions</div>
+                    <label className="font-semibold ">
+                      PORTIONS <span className="text-red-500 text-lg animate-pulse" aria-hidden="true">*</span>
+                    </label>
                   </div>
                   {/* Only display portions that are not empty */}
                   {formData.portionPrices
@@ -339,7 +378,7 @@ export default function AddFoodItem() {
                           <input
                             type="text"
                             name="portion"
-                            placeholder="Item_portion"
+                            placeholder="Item portion"
                             value={p.portion}
                             onChange={e => handlePortionChange(idx, "portion", e.target.value)}
                             className="w-full border p-2 rounded mt-1"
@@ -350,7 +389,7 @@ export default function AddFoodItem() {
                             type="number"
                             name="price"
                             min="0"
-                            placeholder="Item_price"
+                            placeholder="Item price"
                             value={p.price}
                             onChange={e => handlePortionChange(idx, "price", e.target.value)}
                             className="w-full border p-2 rounded mt-1"
@@ -367,13 +406,13 @@ export default function AddFoodItem() {
                           </button>
                         </div>
                       </div>
-                    ))}
+                  ))}
                   {/* Input for adding a new portion */}
                   <div className="flex flex-row gap-4 items-end w-full mt-2">
                     <div className="w-full md:w-1/2">
                       <input
                         type="text"
-                        placeholder="Item_portion"
+                        placeholder="Item portion"
                         value={newPortion.portion}
                         onChange={e => setNewPortion({ ...newPortion, portion: e.target.value })}
                         className="w-full border p-2 rounded mt-1"
@@ -383,7 +422,7 @@ export default function AddFoodItem() {
                       <input
                         type="number"
                         min="0"
-                        placeholder="Item_price"
+                        placeholder="Item price"
                         value={newPortion.price}
                         onChange={e => setNewPortion({ ...newPortion, price: e.target.value })}
                         className="w-full border p-2 rounded mt-1"
@@ -405,6 +444,7 @@ export default function AddFoodItem() {
                       </button>
                     </div>
                   </div>
+                  {formErrors.portions && <p className="text-red-500 text-sm mt-1 font-semibold">{formErrors.portions}</p>}
                 </div>
 
                 <div className="mt-3">
@@ -473,21 +513,23 @@ export default function AddFoodItem() {
                         </button>
                       </div>
                     ))}
-
                   </div>
                 </div>
 
                 <div className="mt-3">
-                  <label className="font-semibold">PREPARATION TIME</label>
+                  <label className="font-semibold">
+                    PREPARATION TIME <span className="text-red-500 text-lg animate-pulse" aria-hidden="true">*</span>
+                  </label>
                   <input
                     type="number"
                     name="preparationTime"
-                    placeholder="Item_preparation_time"
+                    placeholder="Item preparation time"
                     max="30"
                     value={formData.preparationTime}
                     onChange={handleChange}
                     className="w-full border mt-1 p-2 rounded"
                   />
+                  {formErrors.preparationTime && <p className="text-red-500 text-sm mt-1 font-semibold">{formErrors.preparationTime}</p>}
                 </div>
 
                 <div className="flex items-center gap-2 mt-3">

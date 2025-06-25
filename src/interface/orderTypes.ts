@@ -9,7 +9,6 @@ export interface OrderItem {
   // Frontend-only fields (optional):
   item_name: string;
   item_icon: string;                   // Emoji or icon string for visual (optional)
-  price: number;                   // Redundant alias of order_item_price for consistency in UI
 }
 
 // Represents a full order

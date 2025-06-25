@@ -1,6 +1,6 @@
 "use client";
 
-import CategoriesList from "@/components/categoriesList";
+import CategoriesList from "@/components/categories/categoriesList";
 
 export default function Categories() {
 

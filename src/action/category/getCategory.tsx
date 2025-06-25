@@ -11,10 +11,12 @@ export async function getCategory() {
       throw new Error("Unauthorized: No token found");
     }
 
-    const response = await fetch("https://food-admin.wappzo.com/api/categories", {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
+
+    const response = await fetch(`${baseUrl}/api/categories`, {
       method: "GET",
       headers: {
-        "Authorization": `Bearer ${token}`,
+        "Authorization": `Bearer ${ token }`,
         "Content-Type": "application/json",
       },
     });

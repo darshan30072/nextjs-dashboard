@@ -10,8 +10,10 @@ export async function editCategory(id: number, title: string) {
         if (!token) {
             throw new Error("Unauthorized: No token found");
         }
+        
+            const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
 
-        const response = await fetch(`https://food-admin.wappzo.com/api/edit-category/${id}`, {
+        const response = await fetch(`${baseUrl}/api/edit-category/${id}`, {
             method: "PUT",
             headers: {
                 "Authorization": `Bearer ${token}`,

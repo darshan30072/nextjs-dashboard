@@ -11,7 +11,9 @@ export async function updateAvailability(id: number, is_item_available_for_order
             throw new Error("Unauthorized: No token found");
         }
 
-        const response = await fetch(`https://food-admin.wappzo.com/api/${id}/availability`, {
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
+
+        const response = await fetch(`${baseUrl}/api/${id}/availability`, {
             method: "PUT",
             headers: {
                 "Authorization": `Bearer ${token}`,

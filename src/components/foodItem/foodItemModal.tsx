@@ -80,12 +80,13 @@ const FoodItemModal: React.FC<FoodItemModalProps> = ({ item, onClose }) => {
                     unoptimized
                   />
                 )}
+                <div className="absolute bottom-0 left-5 bg-white text-sm text-gray-900 font-semibold rounded-md px-4 py-1 mb-2">
+                {/* <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white to-transparent p-5"> */}
+                  {item.category.title}
+                </div>
               </SwiperSlide>
             ))}
           </Swiper>
-          <div className="absolute bottom-0 left-5 bg-white text-sm text-gray-700 font-semibold rounded-md px-3 mb-2">
-            {item.category.title}
-          </div>
         </div>
 
         {/* Details */}
@@ -119,8 +120,8 @@ const FoodItemModal: React.FC<FoodItemModalProps> = ({ item, onClose }) => {
           </div>
           <div className="text-sm text-gray-700 font-semibold">
             {item.ingredients
-            .map(ing => ing.charAt(0).toUpperCase() + ing.slice(1))
-            .join(', ')}
+              .map(ing => ing.charAt(0).toUpperCase() + ing.slice(1))
+              .join(', ')}
           </div>
         </div>
 

@@ -9,12 +9,17 @@ import { useEffect, useState } from "react";
 import { FaCheck, FaEdit } from "react-icons/fa";
 import { ImCancelCircle } from "react-icons/im";
 import { MdDelete } from "react-icons/md";
-import Loader from "./loader";
 import toast from "react-hot-toast";
+import Loader from "../loader";
 
 export default function CategoriesList() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
+    const [editId, setEditId] = useState<number | null>(null);
+    const [editInput, setEditInput] = useState("");
+    const [newCategory, setNewCategory] = useState("");
+    const [showModal, setShowModal] = useState(false);
+    const [categoryError, setCategoryError] = useState("");
 
     const fetchCategory = async () => {
         setLoading(true);
@@ -32,14 +37,16 @@ export default function CategoriesList() {
         fetchCategory();
     }, []);
 
-    const [editId, setEditId] = useState<number | null>(null);
-    const [editInput, setEditInput] = useState("");
-    const [newCategory, setNewCategory] = useState("");
-    const [showModal, setShowModal] = useState(false);
-
     const handleAddCategory = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newCategory.trim()) return;
+
+        if (!newCategory.trim()) {
+            setCategoryError("Category name is required");
+            toast.error("Category name is required");
+            return;
+        }
+        setCategoryError("");
+
         try {
             const data = await addCategory(newCategory.trim().toUpperCase());
             console.log("Category added : ", data);
@@ -211,13 +218,22 @@ export default function CategoriesList() {
                         <div className="flex items-center justify-center animate-fadeIn h-full">
                             <div className="bg-white rounded-xl max-w-xl w-full p-10 relative animate-slideUp">
                                 <h2 className="text-xl font-semibold mb-4">Add New Category</h2>
+                                <label className="font-semibold block mb-1">
+                                    Category <span className="text-red-500">*</span>
+                                </label>
                                 <input
                                     type="text"
                                     placeholder="Enter category name"
                                     value={newCategory}
-                                    onChange={(e) => setNewCategory(e.target.value)}
-                                    className="w-full border border-gray-500 px-3 py-2 rounded mb-4 font-semibold"
+                                    onChange={(e) => {
+                                        setNewCategory(e.target.value)
+                                        setCategoryError("");
+                                    }}
+                                    className={`w-full border border-gray-500 px-3 py-2 rounded mb-1 font-semibold ${categoryError ? "border-red-500" : "border-gray-500"}`}
                                 />
+                                {categoryError && (
+                                    <p className="text-red-500 text-sm mb-4 font-medium">{categoryError}</p>
+                                )}
                                 <div className="flex justify-end gap-3">
                                     <button
                                         onClick={() => setShowModal(false)}

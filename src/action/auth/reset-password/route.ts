@@ -5,7 +5,9 @@ export async function POST(req: NextRequest) {
   try {
     const { email, password: newpassword } = await req.json();
 
-    const response = await fetch("", {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
+
+    const response = await fetch(`${baseUrl}/api/reset-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, newpassword }),

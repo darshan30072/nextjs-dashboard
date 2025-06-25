@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import SideNav from '@/components/sideNav';
+import SideNav from '@/components/layout/sideNav';
 import { FaBars, FaUserCircle } from 'react-icons/fa';
 import { MdNotifications } from 'react-icons/md';
 

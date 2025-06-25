@@ -9,9 +9,10 @@ interface Props {
   orders: Order[];
   onSelect: (order: Order) => void;
   onStatusChange: (id: number, newStatus: Order['status']) => void;
+  onDelete: (id: number) => void;
 }
 
-const OrderList: React.FC<Props> = ({ orders, onSelect, onStatusChange }) => {
+const OrderList: React.FC<Props> = ({ orders, onSelect, onStatusChange, onDelete }) => {
   return (
     <div className="text-md space-y-4 mb-7">
       {orders.map((order) => (
@@ -22,7 +23,7 @@ const OrderList: React.FC<Props> = ({ orders, onSelect, onStatusChange }) => {
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
             <div className="text-lg font-semibold">Order No. - {order.id}</div>
-            <div className="text-gray-400 font-semibold sm:text-end">
+            <div className="text-sm text-gray-400 font-semibold sm:text-end">
               {format(new Date(order.date), "hh:mm a")}
             </div>
             <div className="flex gap-2">
@@ -41,13 +42,26 @@ const OrderList: React.FC<Props> = ({ orders, onSelect, onStatusChange }) => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2">
             <div>
               {order.items.map((item, idx) => (
-                <div key={idx}>
-                  {item.order_item_quantity}x {item.order_item_portion} {item.item_name} {item.item_icon}
+                <div key={idx} className="grid grid-cols-1 gap-1">
+                  <div className="flex gap-1">
+                    <div>
+                      {item.order_item_quantity}
+                    </div>
+                    <div>
+                      {item.item_icon}{item.item_name}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-gray-400 font-semibold">
+                      Order Comment :
+                    </div>
+                    {item.order_comment}
+                  </div>
                 </div>
               ))}
             </div>
             <div className="flex justify-start sm:justify-end items-center gap-2 text-sm">
-              <OrderActionButtons order={order} onStatusChange={onStatusChange} />
+              <OrderActionButtons order={order} onStatusChange={onStatusChange} onDelete={onDelete} />
             </div>
           </div>
         </div>

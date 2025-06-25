@@ -47,7 +47,6 @@ export default function MultiSelectDropdown({
 
     return (
         <div className="relative w-[130px]" ref={dropdownRef}>
-            {/* top-0 left-62 */}
             <div className="flex gap-2 min-w-max p-1 bg-gray-100 rounded-xl" onClick={() => setIsOpen(!isOpen)}>
                 <div className="text-xl py-2 px-1">
                     <HiOutlineAdjustmentsHorizontal />
@@ -63,8 +62,9 @@ export default function MultiSelectDropdown({
                     </div>
                 </button>
             </div>
+            {/* top-0 left-45 */}
             {isOpen && (
-                <div className="absolute mt-2 z-50 bg-orange-100 border border-gray-300 rounded-xl shadow min-w-48 max-h-60 overflow-y-auto text-sm font-semibold [&::-webkit-scrollbar]:hidden scrollbar-hide">
+                <div className="absolute top-0 left-45 mt-2 z-50 bg-orange-100 border border-gray-300 rounded-xl shadow min-w-48 max-h-60 overflow-y-auto text-orange-500 text-sm font-semibold [&::-webkit-scrollbar]:hidden scrollbar-hide">
                     <div className="p-2">
                         <label className="flex items-center gap-2 cursor-pointer">
                             <input
@@ -90,7 +90,8 @@ export default function MultiSelectDropdown({
                         })}
                     </div>
                 </div>
-            )}
-        </div>
+            )
+            }
+        </div >
     );
 }

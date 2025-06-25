@@ -10,8 +10,10 @@ export const deleteOrder = async (id: number): Promise<boolean> => {
         if (!token) {
             throw new Error("Unauthorized: No token found");
         }
+        
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
 
-        const response = await fetch(`https://food-admin.wappzo.com/orders/${id}`, {
+        const response = await fetch(`${baseUrl}/orders/${id}`, {
             method: 'DELETE',
             headers: {
                 accept: '*/*',

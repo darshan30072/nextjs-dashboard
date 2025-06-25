@@ -2,16 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { Order, OrderItem } from '../../../interface/orderTypes';
-import OrderList from '@/components/orderList';
-import OrderDetails from '@/components/orderDetails';
-import OrderNavbar from '@/components/orderNavber';
+
+import OrderNavbar from '@/components/orders/orderNavber';
 import { getOrders } from '@/action/orders/getOrders';
+import OrderList from '@/components/orders/orderList';
+import OrderDetails from '@/components/orders/orderDetails';
 
 interface RawOrder {
-  order_discount: number;
   id_int: number;
   user_id_int: string;
   order_amount: number;
+  order_discount: number;
   order_tax: number;
   order_net_price: number;
   order_status_id_int: number;
@@ -25,7 +26,7 @@ const statusMap: Record<number, Order['status']> = {
   3: 'preparing',
   4: 'completed',
   5: 'rejected',
-};  
+};
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -63,8 +64,13 @@ export default function OrdersPage() {
           },
           items: (item.items || []).map((itm) => ({
             ...itm,
+            item_id_int: Number(itm.item_id_int),
+            order_item_price: Number(itm.order_item_price) || 999,
+            order_item_quantity: Number(itm.order_item_quantity) || 0,
+            order_item_portion: itm.order_item_portion,
+            order_comment: itm.order_comment,
+
             item_name: "Margherita Pizza", // placeholder
-            price: itm.order_item_price,
             item_icon: "🍕", // optional placeholder
           }))
         }));
@@ -80,23 +86,27 @@ export default function OrdersPage() {
     fetchOrders();
   }, []);
 
-  const handleStatusChange = async (id: number, newStatus: Order['status']) => {
+  const handleStatusChange = async (id: number, newStatus?: Order['status']) => {
     setOrders((prevOrders) =>
-      newStatus === 'rejected'
-        ? prevOrders.filter((order) => order.id !== id)
-        : prevOrders.map((order) =>
+      newStatus
+        ? prevOrders.map((order) =>
           order.id === id ? { ...order, status: newStatus } : order
         )
+        : prevOrders.filter((order) => order.id !== id) // if newStatus is undefined, remove the order
     );
 
-    // Update selectedOrder if it’s the one being modified
     setSelectedOrder((prev) =>
       prev && prev.id === id
-        ? newStatus === 'rejected'
-          ? null // Deselect if rejected
-          : { ...prev, status: newStatus } // Update status
+        ? newStatus
+          ? { ...prev, status: newStatus }
+          : null
         : prev
     );
+  };
+
+  const handleDeleteOrder = (id: number) => {
+    setOrders((prevOrders) => prevOrders.filter((order) => order.id !== id));
+    setSelectedOrder((prev) => (prev?.id === id ? null : prev));
   };
 
   return (
@@ -107,13 +117,14 @@ export default function OrdersPage() {
           <div className="text-lg sm:text-xl font-semibold pb-3 sm:pb-5">Orders List</div>
           <OrderNavbar activeTab={activeTab} onTabChange={setActiveTab} />
           <div className="max-h-[72vh] overflow-y-auto mt-4 sm:mt-5 [&::-webkit-scrollbar]:hidden scrollbar-hide">
-            <OrderList orders={filteredOrders} onSelect={setSelectedOrder} onStatusChange={handleStatusChange} />
+            <OrderList orders={filteredOrders} onSelect={setSelectedOrder} onStatusChange={handleStatusChange} onDelete={handleDeleteOrder}
+            />
           </div>
         </div>
 
         {/* Order Details */}
         <div className="xl:col-span-7 bg-white rounded-2xl shadow p-4 sm:p-6">
-          <OrderDetails order={selectedOrder} onStatusChange={handleStatusChange} />
+          <OrderDetails order={selectedOrder} onStatusChange={handleStatusChange} onDelete={handleDeleteOrder}/>
         </div>
       </div>
     </div>

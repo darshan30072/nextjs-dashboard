@@ -11,7 +11,9 @@ export async function deleteCategory(id: number) {
             throw new Error("Unauthorized: No token found");
         }
 
-        const response = await fetch(`https://food-admin.wappzo.com/api/delete-category/${id}`, {
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
+
+        const response = await fetch(`${baseUrl}/api/delete-category/${id}`, {
             method: "DELETE",
             headers: {
                 "Authorization": `Bearer ${token}`,

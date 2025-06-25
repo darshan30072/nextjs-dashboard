@@ -11,7 +11,9 @@ export async function getOrders() {
       throw new Error("Unauthorized: No token found");
     }
 
-    const response = await fetch("https://food-admin.wappzo.com/orders", {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
+
+    const response = await fetch(`${baseUrl}/orders`, {
       method: "GET",
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -19,7 +21,7 @@ export async function getOrders() {
       },
     });
 
-    const data = await response.json(); 
+    const data = await response.json();
     console.log("API raw response...:", data);
 
     if (!response.ok) {

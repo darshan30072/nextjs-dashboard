@@ -1,6 +1,6 @@
 'use client';
 
-import FoodItemList from "@/components/foodItem";
+import FoodItemList from "@/components/foodItem/foodItem";
 
 export default function MyFoodList() {
 

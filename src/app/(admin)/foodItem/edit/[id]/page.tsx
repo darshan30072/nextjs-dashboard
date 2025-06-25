@@ -7,7 +7,7 @@ import { getFoodItemById } from "@/action/foodItem/getFoodItemById";
 import { updateFoodItem } from "@/action/foodItem/updateFoodItem";
 import Image from "next/image";
 import { IoMdAddCircle } from "react-icons/io";
-import useCategories from "@/components/useCategories";
+import useCategories from "@/components/foodItem/useCategories";
 import Loader from "@/components/loader";
 import toast from "react-hot-toast";
 
@@ -25,6 +25,44 @@ export default function EditFoodItem() {
   const [ingredientInput, setIngredientInput] = useState("");
   const [newPortion, setNewPortion] = useState<PortionPrice>({ portion: "", price: "" });
   const [loading, setLoading] = useState(true);
+  const [formErrors, setFormErrors] = useState({
+    name: "",
+    category: "",
+    details: "",
+    ingredients: "",
+    portions: "",
+    preparationTime: "",
+  });
+
+  const validateForm = () => {
+    const errors: typeof formErrors = {
+      name: "",
+      category: "",
+      details: "",
+      ingredients: "",
+      portions: "",
+      preparationTime: "",
+    };
+
+    if (!formData.name.trim()) errors.name = "Item name is required";
+    if (!formData.category) errors.category = "Category is required";
+    if (!formData.details) errors.details = " Descripions is required";
+    if (!formData.preparationTime) errors.preparationTime = "Preparation time is required";
+
+    if (formData.ingredients.length === 0) {
+      errors.ingredients = "At least one ingredient is required";
+    }
+
+    const validPortions = formData.portionPrices.filter(p => p.portion && p.price);
+    if (validPortions.length === 0) {
+      errors.portions = "At least one portion with price is required";
+    }
+
+    setFormErrors(errors);
+
+    // Return true if no errors
+    return Object.values(errors).every(err => err === "");
+  };
 
   const [formData, setFormData] = useState({
     name: "",
@@ -173,7 +211,7 @@ export default function EditFoodItem() {
       category: "" as FoodCategory,
       details: "",
       ingredients: [],
-      portionPrices: [{ portion: "", price: "" }],
+      portionPrices: [],
       preparationTime: "",
       available: false,
       images: [],
@@ -182,6 +220,15 @@ export default function EditFoodItem() {
       videoPreviews: [],
     });
     setIngredientInput("");
+    setNewPortion({ portion: "", price: "" });
+    setFormErrors({
+      name: "",
+      category: "",
+      details: "",
+      ingredients: "",
+      portions: "",
+      preparationTime: "",
+    });
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
@@ -227,6 +274,13 @@ export default function EditFoodItem() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const isValid = validateForm();
+    if (!isValid) {
+      toast.error("Please fill in all required fields.");
+      return;
+    }
+
     setLoading(true);
     try {
       const urlToFile = async (url: string, filename: string, mimeType: string): Promise<File> => {
@@ -297,13 +351,15 @@ export default function EditFoodItem() {
                   <h2 className="text-xl font-semibold mb-4">Edit Food Item</h2>
                   <button type="button"
                     onClick={resetForm}
-                    className={"text-sm text-gray-400 hover:text-gray-600"}
+                    className={"text-sm text-gray-400 hover:text-gray-600 cursor-pointer"}
                   >
                     RESET
                   </button>
                 </div>
                 <div className="mt-3">
-                  <label className="font-semibold">CATEGORIES</label>
+                  <label className="font-semibold">
+                    CATEGORIES <span className="text-red-500 animate-pulse text-lg" aria-hidden="true">*</span>
+                  </label>
                   <select
                     name="category"
                     value={formData.category}
@@ -320,35 +376,50 @@ export default function EditFoodItem() {
                       ))
                     }
                   </select>
+                  {formErrors.category && (
+                    <p className="text-red-500 text-sm mt-1 font-semibold">{formErrors.category}</p>
+                  )}
                 </div>
 
                 <div className="mt-3">
-                  <label className="font-semibold">ITEM NAME</label>
+                  <label className="font-semibold">
+                    ITEM NAME <span className="text-red-500 animate-pulse text-lg" aria-hidden="true">*</span>
+                  </label>
                   <input
                     type="text"
                     name="name"
-                    placeholder="Item_name"
+                    placeholder="Item name"
                     value={formData.name}
                     onChange={handleChange}
                     required
                     className="w-full border mt-1 p-2 rounded"
                   />
+                  {formErrors.name && (
+                    <p className="text-red-500 text-sm mt-1 font-semibold">{formErrors.name}</p>
+                  )}
                 </div>
 
                 <div className="mt-3">
-                  <label className="font-semibold">DESCRIPTION</label>
+                  <label className="font-semibold">
+                    DESCRIPTION <span className="text-red-500 animate-pulse text-lg" aria-hidden="true">*</span>
+                  </label>
                   <textarea
                     name="details"
-                    placeholder="Item_description"
+                    placeholder="Item description"
                     value={formData.details}
                     onChange={handleChange}
                     rows={3}
                     className="w-full border mt-1 p-2 rounded"
                   />
+                  {formErrors.details && (
+                    <p className="text-red-500 text-sm mt-1 font-semibold">{formErrors.details}</p>
+                  )}
                 </div>
 
                 <div className="mt-3">
-                  <label className="font-semibold">INGREDIENTS</label>
+                  <label className="font-semibold">
+                    INGREDIENTS <span className="text-red-500 animate-pulse text-lg" aria-hidden="true">*</span>
+                  </label>
                   <div className="flex flex-wrap gap-2 mt-1">
                     {formData.ingredients.map(ing => (
                       <span key={ing} className="bg-orange-100 px-3 py-1 rounded-xl text-sm">
@@ -366,7 +437,7 @@ export default function EditFoodItem() {
                   <div className="flex mt-2">
                     <input
                       type="text"
-                      placeholder="Item_ingredient"
+                      placeholder="Item ingredient"
                       value={ingredientInput}
                       onChange={(e) => setIngredientInput(e.target.value)}
                       className="border p-2 rounded-l w-full"
@@ -379,11 +450,16 @@ export default function EditFoodItem() {
                       ADD
                     </button>
                   </div>
+                  {formErrors.ingredients && (
+                    <p className="text-red-500 text-sm mt-1 font-semibold">{formErrors.ingredients}</p>
+                  )}
                 </div>
 
                 <div className="mt-3">
                   <div className="grid grid-cols-2">
-                    <div className="font-semibold text-lg w-10/12">Portions</div>
+                    <label className="font-semibold ">
+                      PORTIONS <span className="text-red-500 animate-pulse text-lg" aria-hidden="true">*</span>
+                    </label>
                   </div>
                   {/* Render existing portionPrices */}
                   {formData.portionPrices.map((p, idx) => (
@@ -392,7 +468,7 @@ export default function EditFoodItem() {
                         <input
                           type="text"
                           name="portion"
-                          placeholder="Item_portion"
+                          placeholder="Item portion"
                           value={p.portion}
                           onChange={e => handlePortionChange(idx, "portion", e.target.value)}
                           className="w-full border p-2 rounded mt-1"
@@ -403,7 +479,7 @@ export default function EditFoodItem() {
                           type="number"
                           name="price"
                           min="0"
-                          placeholder="Item_price"
+                          placeholder="Item price"
                           value={p.price}
                           onChange={e => handlePortionChange(idx, "price", e.target.value)}
                           className="w-full border p-2 rounded mt-1"
@@ -411,7 +487,7 @@ export default function EditFoodItem() {
                       </div>
                       <div className="mt-2">
                         {/* Only show remove if more than portion */}
-                        {formData.portionPrices.length > 0 && (
+                        {formData.portionPrices.length > 1 || (p.portion || p.price) ? (
                           <button
                             type="button"
                             onClick={() => removePortion(idx)}
@@ -420,48 +496,53 @@ export default function EditFoodItem() {
                           >
                             <IoMdAddCircle size={28} style={{ transform: "rotate(45deg)" }} />
                           </button>
-                        )}
+                        ) : null}
                       </div>
                     </div>
                   ))}
+
+                  {/* Input for adding a new portion */}
+                  <div className="flex flex-row gap-4 items-end w-full my-2">
+                    <div className="w-full md:w-1/2">
+                      <input
+                        type="text"
+                        placeholder="Item portion"
+                        value={newPortion.portion}
+                        onChange={e => setNewPortion({ ...newPortion, portion: e.target.value })}
+                        className="w-full border p-2 rounded mt-1"
+                      />
+                    </div>
+                    <div className="w-full md:w-1/2">
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="Item price"
+                        value={newPortion.price}
+                        onChange={e => setNewPortion({ ...newPortion, price: e.target.value })}
+                        className="w-full border p-2 rounded mt-1"
+                      />
+                    </div>
+                    <div className="mt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (newPortion.portion && newPortion.price) {
+                            addPortion(newPortion);
+                            setNewPortion({ portion: "", price: "" });
+                          }
+                        }}
+                        aria-label="Add new portion"
+                        className="text-orange-500"
+                      >
+                        <IoMdAddCircle size={28} />
+                      </button>
+                    </div>
+                  </div>
+                  {formErrors.portions && (
+                    <p className="text-red-500 text-sm mt-1 font-semibold">{formErrors.portions}</p>
+                  )}
                 </div>
 
-                <div className="flex flex-row gap-4 items-end w-full my-2">
-                  <div className="w-full md:w-1/2">
-                    <input
-                      type="text"
-                      placeholder="Item_portion"
-                      value={newPortion.portion}
-                      onChange={e => setNewPortion({ ...newPortion, portion: e.target.value })}
-                      className="w-full border p-2 rounded mt-1"
-                    />
-                  </div>
-                  <div className="w-full md:w-1/2">
-                    <input
-                      type="number"
-                      min="0"
-                      placeholder="Item_price"
-                      value={newPortion.price}
-                      onChange={e => setNewPortion({ ...newPortion, price: e.target.value })}
-                      className="w-full border p-2 rounded mt-1"
-                    />
-                  </div>
-                  <div className="mt-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (newPortion.portion && newPortion.price) {
-                          addPortion(newPortion);
-                          setNewPortion({ portion: "", price: "" });
-                        }
-                      }}
-                      aria-label="Add new portion"
-                      className="text-orange-500"
-                    >
-                      <IoMdAddCircle size={28} />
-                    </button>
-                  </div>
-                </div>
 
                 <div className="mt-3">
                   <label className="font-semibold" htmlFor="upload-image">UPLOAD PHOTO/VIDEO</label>
@@ -533,16 +614,21 @@ export default function EditFoodItem() {
                 </div>
 
                 <div className="mt-3">
-                  <label className="font-semibold">PREPARATION TIME</label>
+                  <label className="font-semibold">
+                    PREPARATION TIME <span className="text-red-500 animate-pulse text-lg" aria-hidden="true">*</span>
+                  </label>
                   <input
                     type="number"
                     name="preparationTime"
-                    placeholder="Item_preparation_time"
+                    placeholder="Item preparation time"
                     max="30"
                     value={formData.preparationTime}
                     onChange={handleChange}
                     className="w-full border mt-1 p-2 rounded"
                   />
+                  {formErrors.preparationTime && (
+                    <p className="text-red-500 text-sm mt-1 font-semibold">{formErrors.preparationTime}</p>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2 mt-3">

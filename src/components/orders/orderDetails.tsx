@@ -4,16 +4,18 @@
 import { Order } from '@/interface/orderTypes';
 import React from 'react';
 import OrderActionButtons from './orderActionButtons';
+import { format } from 'date-fns';
 
 interface Props {
   order: Order | null;
   onStatusChange: (id: number, newStatus: Order['status']) => void;
+  onDelete: (id: number) => void;
 }
 
-const OrderDetails: React.FC<Props> = ({ order, onStatusChange }) => {
+const OrderDetails: React.FC<Props> = ({ order, onStatusChange, onDelete }) => {
   if (!order) return <p className="text-gray-400">Select an order to view details.</p>;
 
-  const totalAmount = order.items.reduce((sum, item) => sum + item.price, 0);
+  const totalAmount = order.items.reduce((sum, item) => sum + item.order_item_price, 0);
 
   return (
     <div className="flex flex-col">
@@ -23,7 +25,7 @@ const OrderDetails: React.FC<Props> = ({ order, onStatusChange }) => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
           <div>
             <h1 className="font-semibold">Order No - {order.id}</h1>
-            <div className="text-gray-400 text-sm">{order.date}</div>
+            <div className="text-gray-400 text-sm">{format(new Date(order.date), "MMM dd, yyyy - hh:mm a")}</div>
           </div>
           <div className='text-right'>
             <div className="font-semibold">{order.user.name}</div>
@@ -44,11 +46,12 @@ const OrderDetails: React.FC<Props> = ({ order, onStatusChange }) => {
         <div className="border-t border-gray-300 pt-4 space-y-2">
           {order.items.map((item, idx) => (
             <div key={idx} className="flex justify-between">
-              <div className='flex gap-3'>
+              <div className='flex gap-1'>
                 <div>
-                  {item.item_icon || "🍕"}
+                  {item.order_item_quantity}
                 </div>
                 <div>
+                  {item.item_icon || "🍕"}
                   {item.item_name || "3x Large Margherita Pizza"}
                 </div>
               </div>
@@ -56,7 +59,7 @@ const OrderDetails: React.FC<Props> = ({ order, onStatusChange }) => {
                 {new Intl.NumberFormat("en-US", {
                   style: "currency",
                   currency: "USD",
-                }).format(item.price)}
+                }).format(item.order_item_price)}
               </div>
             </div>
           ))}
@@ -69,7 +72,7 @@ const OrderDetails: React.FC<Props> = ({ order, onStatusChange }) => {
         </div>
 
         <div className="mt-6 text-lg">
-          <OrderActionButtons order={order} onStatusChange={onStatusChange} />
+          <OrderActionButtons order={order} onStatusChange={onStatusChange} onDelete={onDelete} />
         </div>
 
       </div>

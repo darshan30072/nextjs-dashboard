@@ -13,8 +13,8 @@ import { MdDelete } from "react-icons/md";
 import useCategories from "./useCategories";
 import { getCategory } from "@/action/category/getCategory";
 import FoodItemModal from "./foodItemModal";
-import Loader from "./loader";
-import MultiSelectDropdown from "./categoriesDropdown";
+import Loader from "../loader";
+import MultiSelectDropdown from "../categories/categoriesDropdown";
 import toast from "react-hot-toast";
 import { updateAvailability } from "@/action/foodItem/updateAvailability";
 

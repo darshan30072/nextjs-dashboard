@@ -5,13 +5,15 @@ export async function getFoodItem() {
 
   try {
     const token = getCookie('token');
-    console.log("Token: ",token);
+    console.log("Token: ", token);
 
     if (!token) {
       throw new Error("Unauthorized: No token found");
     }
 
-    const response = await fetch("https://food-admin.wappzo.com/api/items", {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
+
+    const response = await fetch(`${baseUrl}/api/items`, {
       method: "GET",
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -28,6 +30,6 @@ export async function getFoodItem() {
     return data;
   } catch (error) {
     console.error("Error fetching FoodItems:", error);
-    return []; 
+    return [];
   }
 }

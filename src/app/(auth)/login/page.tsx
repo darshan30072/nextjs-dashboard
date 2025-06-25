@@ -31,16 +31,17 @@ export default function LoginPage() {
       console.log(data)
 
       if (res.ok) {
-        toast.success("Login Successful!");
         console.log("Login successful:", data);
-        // router.push("/dashboard");
         setCookie("token", data.token, 24)
+        toast.success("Login Successful!");
+        // router.push("/dashboard");
         location.pathname = "/dashboard"
       } else {
-        alert(data.message || "Login failed");
+        toast.error("Login Failed!");
       }
     } catch (err) {
       console.error(err);
+      toast.error("Login Failed...!");
     }
   };
 

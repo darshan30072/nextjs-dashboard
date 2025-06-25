@@ -2,16 +2,31 @@
 
 import React from "react";
 import { Order } from "@/interface/orderTypes";
+import { deleteOrder } from "@/action/orders/deleteOrders";
 
 interface Props {
   order: Order;
   onStatusChange: (id: number, newStatus: Order['status']) => void;
+  onDelete: (id: number) => void;
 }
 
-const OrderActionButtons: React.FC<Props> = ({ order, onStatusChange }) => {
-  const handleClick = (status: Order['status'], e: React.MouseEvent) => {
+const OrderActionButtons: React.FC<Props> = ({ order, onStatusChange, onDelete }) => {
+  const handleClick = async (status: Order['status'], e: React.MouseEvent) => {
     e.stopPropagation?.();
-    onStatusChange(order.id, status);
+
+    if (status === "rejected") {
+      const confirmed = window.confirm("Are you sure you want to reject and delete this order?");
+      if (!confirmed) return;
+
+      const success = await deleteOrder(order.id);
+      if (success) {
+        onDelete(order.id);
+      } else {
+        alert("Failed to delete the order. Try again.");
+      }
+    } else {
+      onStatusChange(order.id, status);
+    }
   };
 
   switch (order.status) {

@@ -36,7 +36,9 @@ export async function addFoodItem(formData: {
             form.append('files', image);
         });
 
-        const response = await fetch("https://food-admin.wappzo.com/api/add-item", {
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
+
+        const response = await fetch(`${baseUrl}/api/add-item`, {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${token}`,
