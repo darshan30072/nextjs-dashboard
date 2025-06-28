@@ -12,7 +12,7 @@ export async function addCategory(title: string) {
 
         const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
 
-        const response = await fetch(`${baseUrl}/api/add-category`, {
+        const response = await fetch(`${baseUrl}/v1/restaurant/add-category`, {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${token}`,

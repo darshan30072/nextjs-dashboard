@@ -3,9 +3,9 @@
 export default function Notification() {
 
     return (
-        <div>
-            <div className="flex-1 overflow-y-auto p-4 sm:p-5">
-                <div className="bg-white rounded-xl font-bold">
+        <>
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 [&::-webkit-scrollbar]:hidden scrollbar-hide">
+                <div className="bg-white rounded-xl shadow font-bold border border-gray-200 p-4 sm:p-6">
                     <div className="flex p-8">
                         <div className="p-10 bg-gray-400 rounded-full"></div>
                         <div className="flex flex-col ">
@@ -50,6 +50,6 @@ export default function Notification() {
                     </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 }

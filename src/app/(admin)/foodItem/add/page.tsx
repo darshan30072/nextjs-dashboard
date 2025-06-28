@@ -23,6 +23,7 @@ export default function AddFoodItem() {
   const [newPortion, setNewPortion] = useState<PortionPrice>({ portion: "", price: "" });
   const [loading, setLoading] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -37,6 +38,25 @@ export default function AddFoodItem() {
     imagePreviews: [] as string[],
     videoPreviews: [] as string[],
   });
+
+  const resetForm = () => {
+    const confirmed = window.confirm("Are you sure you want to reset the form?");
+    if (!confirmed) return;
+    setFormData({
+      name: "",
+      category: "" as FoodCategory,
+      details: "",
+      ingredients: [],
+      portionPrices: [{ portion: "", price: "" }],
+      preparationTime: "",
+      available: false,
+      images: [],
+      videos: [],
+      imagePreviews: [],
+      videoPreviews: [],
+    });
+    setIngredientInput("");
+  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -55,24 +75,7 @@ export default function AddFoodItem() {
       setFormData(prev => ({ ...prev, [name]: target.checked }));
     } else if (target instanceof HTMLInputElement && type === "file" && target.files) {
       const files = Array.from(target.files);
-      const images: File[] = [];
-      const videos: string[] = [];
-
-      files.forEach(file => {
-        const url = URL.createObjectURL(file);
-        if (file.type.startsWith("video/")) {
-          videos.push(url);
-        } else {
-          images.push(file);
-        }
-      });
-
-      setFormData(prev => ({
-        ...prev,
-        images: [...prev.images, ...files],
-        imagePreviews: [...prev.imagePreviews, ...images.map(img => URL.createObjectURL(img))],
-        videoPreviews: [...prev.videoPreviews, ...videos],
-      }));
+      setSelectedFiles(prev => [...prev, ...files]);
     } else {
       setFormData(prev => ({ ...prev, [name]: target.value }));
     }
@@ -144,64 +147,16 @@ export default function AddFoodItem() {
     }));
   };
 
-  const resetForm = () => {
-    const confirmed = window.confirm("Are you sure you want to reset the form?");
-    if (!confirmed) return;
-    setFormData({
-      name: "",
-      category: "" as FoodCategory,
-      details: "",
-      ingredients: [],
-      portionPrices: [{ portion: "", price: "" }],
-      preparationTime: "",
-      available: false,
-      images: [],
-      videos: [],
-      imagePreviews: [],
-      videoPreviews: [],
-    });
-    setIngredientInput("");
-  };
-
+  // Drag and drop handler (optional)
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     const files = Array.from(e.dataTransfer.files);
-    const images: File[] = [];
-    const videos: string[] = [];
-
-    files.forEach(file => {
-      const url = URL.createObjectURL(file);
-      if (file.type.startsWith("video/")) {
-        videos.push(url);
-      } else {
-        images.push(file);
-      }
-    });
-
-    setFormData(prev => ({
-      ...prev,
-      images: [...prev.images, ...files],
-      imagePreviews: [...prev.imagePreviews, ...images.map(img => URL.createObjectURL(img))],
-      videoPreviews: [...prev.videoPreviews, ...videos],
-    }));
+    setSelectedFiles(prev => [...prev, ...files]);
   };
 
-  const handleRemoveImage = (index: number) => {
-    setFormData(prev => {
-      const newImages = [...prev.images];
-      const newPreviews = [...prev.imagePreviews];
-      newImages.splice(index, 1);
-      newPreviews.splice(index, 1);
-      return { ...prev, images: newImages, imagePreviews: newPreviews };
-    });
-  };
-
-  const handleRemoveVideo = (index: number) => {
-    setFormData(prev => {
-      const newPreviews = [...prev.videoPreviews];
-      newPreviews.splice(index, 1);
-      return { ...prev, videoPreviews: newPreviews };
-    });
+  // Remove file (image or video) by index
+  const handleRemoveFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -227,22 +182,12 @@ export default function AddFoodItem() {
     setFormErrors({});
     setLoading(true);
 
-    // // Log each field of formData before submission
-    // console.log("Form Submission Payload:");
-    // console.log("Name:", formData.name);
-    // console.log("Category ID:", formData.category);
-    // console.log("Details:", formData.details);
-    // console.log("Ingredients:", formData.ingredients);
-    // console.log("Portion Prices:", formData.portionPrices);
-    // console.log("Preparation Time:", formData.preparationTime);
-    // console.log("Available:", formData.available);
-    // console.log("Images:", formData.images); // These are File objects
-    // console.log("Videos:", formData.videos); // Not being added properly, only previews shown
-    // console.log("Image Previews:", formData.imagePreviews);
-    // console.log("Video Previews:", formData.videoPreviews);
-
     try {
-      await addFoodItem(formData);
+      // Attach files to formData as needed for your backend
+      await addFoodItem({
+        ...formData,
+        images: selectedFiles, // Pass all files in order
+      });
       toast.success("Food Item Added Successfully!");
       router.push("/foodItem");
     } catch (err) {
@@ -263,8 +208,8 @@ export default function AddFoodItem() {
               <Loader message="Fetching item data..." />
             ) : (
               <form onSubmit={handleSubmit}>
-                <div className="flex justify-between items-center">
-                  <h2 className="text-xl font-semibold mb-4">Add Food Item</h2>
+                <div className="flex justify-between items-center mt-1 mb-5">
+                  <h2 className="text-xl font-semibold">Add Food Item</h2>
 
                   <button type="button"
                     onClick={resetForm}
@@ -273,7 +218,7 @@ export default function AddFoodItem() {
                     RESET
                   </button>
                 </div>
-                <div className="mt-3">
+                <div className="mt-4">
                   <label className="font-semibold">
                     CATEGORIES <span className="text-red-500 text-lg animate-pulse" aria-hidden="true">*</span>
                   </label>
@@ -285,8 +230,8 @@ export default function AddFoodItem() {
                     disabled={catsLoading}
                   >
                     <option value="">Select</option>
-                    {dynamicCats.map(cat => (
-                      <option key={cat.id_int} value={cat.id_int.toString()}>
+                    {[...dynamicCats].reverse().map(cat => (
+                      <option key={cat.id_int} value={cat.id_int.toString()} className="mt-1">
                         {cat.title}
                       </option>
                     ))
@@ -295,7 +240,7 @@ export default function AddFoodItem() {
                   {formErrors.category && <p className="text-red-500 text-sm mt-1 font-semibold">{formErrors.category}</p>}
                 </div>
 
-                <div className="mt-3">
+                <div className="mt-4">
                   <label className="font-semibold">
                     ITEM NAME <span className="text-red-500 text-lg animate-pulse" aria-hidden="true">*</span>
                   </label>
@@ -310,7 +255,7 @@ export default function AddFoodItem() {
                   {formErrors.name && <p className="text-red-500 text-sm mt-1 font-semibold">{formErrors.name}</p>}
                 </div>
 
-                <div className="mt-3">
+                <div className="mt-4">
                   <label className="font-semibold">
                     DESCRIPTION <span className="text-red-500 text-lg animate-pulse" aria-hidden="true">*</span>
                   </label>
@@ -319,31 +264,31 @@ export default function AddFoodItem() {
                     placeholder="Item description"
                     value={formData.details}
                     onChange={handleChange}
-                    rows={3}
+                    rows={2}
                     className="w-full border mt-1 p-2 rounded"
                   />
                   {formErrors.details && <p className="text-red-500 text-sm mt-1 font-semibold">{formErrors.details}</p>}
                 </div>
 
-                <div className="mt-3">
+                <div className="mt-4">
                   <label className="font-semibold">
                     INGREDIENTS <span className="text-red-500 text-lg animate-pulse" aria-hidden="true">*</span>
                   </label>
                   <div className="flex flex-wrap gap-2 mt-1">
                     {formData.ingredients.map(ing => (
-                      <span key={ing} className="bg-orange-100 px-3 py-1 rounded-xl text-sm">
+                      <span key={ing} className="bg-orange-100 px-3 py-1 mb-2 rounded-xl text-sm">
                         {ing.charAt(0).toUpperCase() + ing.slice(1)}
                         <button
                           type="button"
                           onClick={() => handleRemoveIngredient(ing)}
-                          className="ml-2 font-extrabold text-red-500"
+                          className="ml-1 text-lg font-semibold text-red-500"
                         >
                           ×
                         </button>
                       </span>
                     ))}
                   </div>
-                  <div className="flex mt-2">
+                  <div className="flex">
                     <input
                       type="text"
                       placeholder="Item ingredient"
@@ -363,7 +308,7 @@ export default function AddFoodItem() {
                 </div>
 
                 {/* PORTIONS */}
-                <div className="mt-3">
+                <div className="mt-4">
                   <div className="grid grid-cols-2">
                     <label className="font-semibold ">
                       PORTIONS <span className="text-red-500 text-lg animate-pulse" aria-hidden="true">*</span>
@@ -373,7 +318,7 @@ export default function AddFoodItem() {
                   {formData.portionPrices
                     .filter(p => p.portion.trim() !== "" && p.price.trim() !== "")
                     .map((p, idx) => (
-                      <div key={idx} className="flex flex-row gap-4 items-end w-full my-2">
+                      <div key={idx} className="flex flex-row gap-4 items-end w-full mt-1 my-3">
                         <div className="w-full md:w-1/2">
                           <input
                             type="text"
@@ -406,9 +351,9 @@ export default function AddFoodItem() {
                           </button>
                         </div>
                       </div>
-                  ))}
+                    ))}
                   {/* Input for adding a new portion */}
-                  <div className="flex flex-row gap-4 items-end w-full mt-2">
+                  <div className="flex flex-row gap-4 items-end w-full">
                     <div className="w-full md:w-1/2">
                       <input
                         type="text"
@@ -447,7 +392,7 @@ export default function AddFoodItem() {
                   {formErrors.portions && <p className="text-red-500 text-sm mt-1 font-semibold">{formErrors.portions}</p>}
                 </div>
 
-                <div className="mt-3">
+                <div className="mt-4">
                   <label className="font-semibold" htmlFor="upload-image">UPLOAD PHOTO/VIDEO</label>
                   <div
                     onDrop={handleDrop}
@@ -463,8 +408,8 @@ export default function AddFoodItem() {
                         name="images"
                         accept="image/*,video/*"
                         multiple
-                        className="hidden"
                         onChange={handleChange}
+                        className="hidden"
                       />
                       <div className="flex flex-col items-center text-gray-400">
                         <div className="bg-orange-100 rounded-full px-3 py-1">
@@ -474,49 +419,49 @@ export default function AddFoodItem() {
                       </div>
                     </label>
 
-                    {/* Image Previews */}
-                    {formData.imagePreviews.map((preview, index) => (
-                      <div key={index} className="relative w-28 h-28">
-                        <Image
-                          src={preview}
-                          alt={`preview-${index}`}
-                          fill
-                          className="rounded object-cover"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveImage(index)}
-                          className="absolute top-1 right-1 bg-black/100 hover:bg-red-600 text-white rounded-full w-5 h-5 text-xs flex justify-center"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-
-                    {/* Video Previews */}
-                    {formData.videoPreviews.map((preview, index) => (
-                      <div key={`id-${index}`} className="relative w-28 h-28">
-                        <video
-                          src={preview}
-                          className="rounded object-cover w-full h-full"
-                          autoPlay
-                          muted
-                          loop
-                          playsInline
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveVideo(index)}
-                          className="absolute top-1 right-1 bg-black/100 hover:bg-red-600 text-white rounded-full w-5 h-5 text-xs flex justify-center"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
+                    <div className="flex flex-wrap gap-4 mt-3">
+                      {selectedFiles.map((file, idx) =>
+                        file.type.startsWith("image/") ? (
+                          <div key={idx} className="relative w-28 h-28">
+                            <Image
+                              src={URL.createObjectURL(file)}
+                              alt="preview"
+                              fill
+                              className="rounded object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveFile(idx)}
+                              className="absolute top-1 right-1 bg-black/100 hover:bg-red-600 text-white rounded-full w-5 h-5 text-xs flex justify-center"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ) : file.type.startsWith("video/") ? (
+                          <div key={idx} className="relative w-28 h-28">
+                            <video
+                              src={URL.createObjectURL(file)}
+                              autoPlay
+                              muted
+                              loop
+                              playsInline
+                              className="rounded object-cover w-full h-full"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveFile(idx)}
+                              className="absolute top-1 right-1  bg-black/100 hover:bg-red-600 text-white rounded-full w-5 h-5 text-xs flex justify-center"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ) : null
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                <div className="mt-3">
+                <div className="mt-4">
                   <label className="font-semibold">
                     PREPARATION TIME <span className="text-red-500 text-lg animate-pulse" aria-hidden="true">*</span>
                   </label>
@@ -532,7 +477,7 @@ export default function AddFoodItem() {
                   {formErrors.preparationTime && <p className="text-red-500 text-sm mt-1 font-semibold">{formErrors.preparationTime}</p>}
                 </div>
 
-                <div className="flex items-center gap-2 mt-3">
+                <div className="flex items-center gap-2 mt-4">
                   <label className="font-semibold">Available</label>
                   <button
                     type="button"

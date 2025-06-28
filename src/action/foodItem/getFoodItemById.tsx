@@ -13,7 +13,7 @@ export const getFoodItemById = async (id: number) => {
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
 
-    const response = await fetch(`${baseUrl}/api/item/${id}`, {
+    const response = await fetch(`${baseUrl}/v1/restaurant/item/${id}`, {
       method: "GET",
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -22,7 +22,7 @@ export const getFoodItemById = async (id: number) => {
     });
 
     const data = await response.json();
-
+    
     if (!response.ok) {
       console.error("Response not OK", data);
       throw new Error(data.message || "Failed to edit category.");

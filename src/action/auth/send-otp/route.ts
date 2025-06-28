@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
 
-    const response = await fetch(`${baseUrl}/api/send-otp`, {
+    const response = await fetch(`${baseUrl}/v1/auth/send-otp`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),

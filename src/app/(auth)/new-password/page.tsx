@@ -53,7 +53,9 @@ export default function NewPasswordPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/auth/reset-password", {
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
+
+      const res = await fetch(`${baseUrl}/v1/auth/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),

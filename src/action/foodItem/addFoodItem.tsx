@@ -10,6 +10,7 @@ export async function addFoodItem(formData: {
     preparationTime: string;
     available: boolean;
     images: File[];
+    videos?: File[]; // Optional
 }) {
     try {
         const token = getCookie('token');
@@ -35,10 +36,15 @@ export async function addFoodItem(formData: {
         formData.images.forEach(image => {
             form.append('files', image);
         });
+        if (formData.videos) {
+            formData.videos.forEach(video => {
+                form.append('files', video);
+            });
+        }
 
         const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
 
-        const response = await fetch(`${baseUrl}/api/add-item`, {
+        const response = await fetch(`${baseUrl}/v1/restaurant/add-item`, {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${token}`,

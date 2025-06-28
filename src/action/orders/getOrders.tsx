@@ -13,7 +13,7 @@ export async function getOrders() {
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
 
-    const response = await fetch(`${baseUrl}/orders`, {
+    const response = await fetch(`${baseUrl}/v1/restaurant/get-orders`, {
       method: "GET",
       headers: {
         "Authorization": `Bearer ${token}`,

@@ -13,7 +13,7 @@ export async function updateAvailability(id: number, is_item_available_for_order
 
         const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
 
-        const response = await fetch(`${baseUrl}/api/${id}/availability`, {
+        const response = await fetch(`${baseUrl}/v1/restaurant/${id}/availability`, {
             method: "PUT",
             headers: {
                 "Authorization": `Bearer ${token}`,

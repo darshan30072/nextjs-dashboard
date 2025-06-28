@@ -45,7 +45,7 @@ const OrderList: React.FC<Props> = ({ orders, onSelect, onStatusChange, onDelete
                 <div key={idx} className="grid grid-cols-1 gap-1">
                   <div className="flex gap-1">
                     <div>
-                      {item.order_item_quantity}
+                      {item.order_item_quantity}x
                     </div>
                     <div>
                       {item.item_icon}{item.item_name}

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import toast from "react-hot-toast";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -12,12 +13,14 @@ export default function ForgotPasswordPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    if (email !== "admin@gmail.com") {
-      console.log("Access Denied: Only Admin can log in.")
-      return;
-    }
+    // if (email !== "admin@gmail.com") {
+    //   toast.error("Email not found.")
+    //   return;
+    // }
     try {
-      const res = await fetch("https://food-admin.wappzo.com/api/send-otp", {
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
+
+    const res = await fetch(`${baseUrl}/v1/auth/send-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -31,7 +34,7 @@ export default function ForgotPasswordPage() {
         localStorage.setItem("resetEmail", email);
         router.push("/verification");
       } else {
-        alert(data.message || "Failed to send OTP");
+        toast.error(data.message || "Failed to send OTP");
       }
     } catch (error) {
       console.error("Error sending OTP:", error);
@@ -63,7 +66,7 @@ export default function ForgotPasswordPage() {
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="mb-10">
-              <label className="text-xs lg:text-sm text-gray-700 font-medium">EMAIL : </label>
+              <label className="text-xs lg:text-sm text-gray-700 font-medium">EMAIL</label>
               <input
                 type="email"
                 placeholder="example@gmail.com"

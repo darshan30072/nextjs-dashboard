@@ -113,8 +113,8 @@ export default function OrdersPage() {
     <div className="p-4 sm:p-5 overflow-y-auto [&::-webkit-scrollbar]:hidden scrollbar-hide">
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-12 gap-6">
         {/* Order List */}
-        <div className="xl:col-span-5 bg-white rounded-xl shadow p-4 sm:p-5">
-          <div className="text-lg sm:text-xl font-semibold pb-3 sm:pb-5">Orders List</div>
+        <div className="xl:col-span-5 bg-white rounded-xl shadow font-bold border border-gray-200 p-4 sm:p-6">
+          <h1 className="items-center text-lg sm:text-xl font-semibold py-1.5 sm:pb-5">Orders List</h1>
           <OrderNavbar activeTab={activeTab} onTabChange={setActiveTab} />
           <div className="max-h-[72vh] overflow-y-auto mt-4 sm:mt-5 [&::-webkit-scrollbar]:hidden scrollbar-hide">
             <OrderList orders={filteredOrders} onSelect={setSelectedOrder} onStatusChange={handleStatusChange} onDelete={handleDeleteOrder}
@@ -123,7 +123,7 @@ export default function OrdersPage() {
         </div>
 
         {/* Order Details */}
-        <div className="xl:col-span-7 bg-white rounded-2xl shadow p-4 sm:p-6">
+        <div className="xl:col-span-7 bg-white rounded-xl shadow font-bold border border-gray-200 p-4 sm:p-6">
           <OrderDetails order={selectedOrder} onStatusChange={handleStatusChange} onDelete={handleDeleteOrder}/>
         </div>
       </div>

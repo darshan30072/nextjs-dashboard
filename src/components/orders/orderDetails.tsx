@@ -15,7 +15,7 @@ interface Props {
 const OrderDetails: React.FC<Props> = ({ order, onStatusChange, onDelete }) => {
   if (!order) return <p className="text-gray-400">Select an order to view details.</p>;
 
-  const totalAmount = order.items.reduce((sum, item) => sum + item.order_item_price, 0);
+  const totalAmount = order.amount;
 
   return (
     <div className="flex flex-col">
@@ -45,21 +45,41 @@ const OrderDetails: React.FC<Props> = ({ order, onStatusChange, onDelete }) => {
 
         <div className="border-t border-gray-300 pt-4 space-y-2">
           {order.items.map((item, idx) => (
-            <div key={idx} className="flex justify-between">
-              <div className='flex gap-1'>
-                <div>
-                  {item.order_item_quantity}
+            <div key={idx}>
+              <div className="flex justify-between">
+                <div className='flex gap-1'>
+                  <div>
+                    {item.order_item_quantity}x
+                  </div>
+                  <div>
+                    {item.item_icon || "🍕"}
+                    {item.item_name || "3x Large Margherita Pizza"}
+                  </div>
                 </div>
-                <div>
-                  {item.item_icon || "🍕"}
-                  {item.item_name || "3x Large Margherita Pizza"}
+                <div className='text-orange-500 font-semibold'>
+                  {new Intl.NumberFormat("en-US", {
+                    style: "currency",
+                    currency: "USD",
+                  }).format(item.order_item_price)}
                 </div>
               </div>
-              <div className='text-orange-500 font-semibold'>
-                {new Intl.NumberFormat("en-US", {
-                  style: "currency",
-                  currency: "USD",
-                }).format(item.order_item_price)}
+              <div className="flex justify-between mt-3">
+                <div className='flex gap-1'>
+                  <div>
+                    GST : 
+                  </div>
+                  <div>
+                    {/* {item.item_icon || "🍕"}
+                    {item.item_name || "3x Large Margherita Pizza"} */}
+                  </div>
+                </div>
+                <div className='text-orange-500 font-semibold'>
+                  {/* {new Intl.NumberFormat("en-US", {
+                    style: "currency",
+                    currency: "USD",
+                  }).format */}
+                  {(order.tax)} % 
+                </div>
               </div>
             </div>
           ))}

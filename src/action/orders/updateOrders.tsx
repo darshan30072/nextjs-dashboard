@@ -12,7 +12,7 @@ export async function updateStatusOrders(id: number, status: string) {
         }
         const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
 
-        const response = await fetch(`${baseUrl}/orders/update-status`, {
+        const response = await fetch(`${baseUrl}/v1/restaurant/update-status`, {
             method: "PUT",
             headers: {
                 "Authorization": `Bearer ${token}`,

@@ -16,6 +16,11 @@ type PortionPrice = {
   price: string;
 };
 
+type ExistingAttachment = {
+  url: string;
+  type: 'image' | 'video';
+};
+
 export default function EditFoodItem() {
   const router = useRouter();
   const params = useParams();
@@ -25,6 +30,12 @@ export default function EditFoodItem() {
   const [ingredientInput, setIngredientInput] = useState("");
   const [newPortion, setNewPortion] = useState<PortionPrice>({ portion: "", price: "" });
   const [loading, setLoading] = useState(true);
+
+  // For new uploads (in order)
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  // For existing attachments (from DB)
+  const [existingAttachments, setExistingAttachments] = useState<ExistingAttachment[]>([]);
+
   const [formErrors, setFormErrors] = useState({
     name: "",
     category: "",
@@ -72,11 +83,31 @@ export default function EditFoodItem() {
     portionPrices: [{ portion: "", price: "" }],
     preparationTime: "",
     available: false,
-    images: [] as File[],
-    videos: [] as File[],
-    imagePreviews: [] as string[],
-    videoPreviews: [] as string[],
   });
+
+  const resetForm = () => {
+    const confirmed = window.confirm("Are you sure you want to reset the form?");
+    if (!confirmed) return;
+    setFormData({
+      name: "",
+      category: "" as FoodCategory,
+      details: "",
+      ingredients: [],
+      portionPrices: [],
+      preparationTime: "",
+      available: false,
+    });
+    setIngredientInput("");
+    setNewPortion({ portion: "", price: "" });
+    setFormErrors({
+      name: "",
+      category: "",
+      details: "",
+      ingredients: "",
+      portions: "",
+      preparationTime: "",
+    });
+  };
 
   useEffect(() => {
     const fetchFoodItem = async () => {
@@ -103,19 +134,17 @@ export default function EditFoodItem() {
               ? String(data.item_prepartion_time_min)
               : "",
           available: data.is_item_available_for_order === 1,
-          images: [],
-          videos: [],
-          imagePreviews: data.attachments
-            ?.filter((att: { file_logical_name: string; }) =>
-              /\.(jpg|jpeg|png|gif|webp)$/i.test(att.file_logical_name)
-            )
-            .map((att: { file_logical_name: string; }) => `https://food-admin.wappzo.com/uploads/items/${att.file_logical_name}`) || [],
-          videoPreviews: data.attachments
-            ?.filter((att: { file_logical_name: string; }) =>
-              /\.(mp4|webm|ogg|mov)$/i.test(att.file_logical_name)
-            )
-            .map((att: { file_logical_name: string; }) => `https://food-admin.wappzo.com/uploads/items/${att.file_logical_name}`) || [],
         });
+
+        // Prepare existing attachments in order (if your API provides order info)
+        const attachments: ExistingAttachment[] = (data.attachments || []).map((att: { file_logical_name: string; }) => {
+          const url = `https://food-admin.wappzo.com/uploads/items/${att.file_logical_name}`;
+          if (/\.(mp4|webm|ogg|mov)$/i.test(att.file_logical_name)) {
+            return { url, type: 'video' };
+          }
+          return { url, type: 'image' };
+        });
+        setExistingAttachments(attachments);
       } catch (err) {
         toast.error("Failed to fetch food item.");
         console.error(err);
@@ -130,30 +159,21 @@ export default function EditFoodItem() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const target = e.target;
-    if (target instanceof HTMLInputElement && target.type === "checkbox") {
-      setFormData(prev => ({ ...prev, [target.name]: target.checked }));
-    } else if (target instanceof HTMLInputElement && target.type === "file" && target.multiple) {
-      const files = Array.from(target.files || []);
-      const images: File[] = [];
-      const videos: string[] = [];
+    const { name, type } = target;
 
-      files.forEach(file => {
-        const url = URL.createObjectURL(file);
-        if (file.type.startsWith("video/")) {
-          videos.push(url);
-        } else {
-          images.push(file);
-        }
-      });
+    // Clear the specific field's error
+    setFormErrors(prev => {
+      const updated = { ...prev };
+      return updated;
+    });
 
-      setFormData(prev => ({
-        ...prev,
-        images: [...prev.images, ...files],
-        imagePreviews: [...prev.imagePreviews, ...images.map(img => URL.createObjectURL(img))],
-        videoPreviews: [...prev.videoPreviews, ...videos],
-      }));
+    if (target instanceof HTMLInputElement && type === "checkbox") {
+      setFormData(prev => ({ ...prev, [name]: target.checked }));
+    } else if (target instanceof HTMLInputElement && type === "file" && target.files) {
+      const files = Array.from(target.files);
+      setSelectedFiles(prev => [...prev, ...files]);
     } else {
-      setFormData(prev => ({ ...prev, [target.name]: target.value }));
+      setFormData(prev => ({ ...prev, [name]: target.value }));
     }
   };
 
@@ -203,73 +223,21 @@ export default function EditFoodItem() {
     }));
   };
 
-  const resetForm = () => {
-    const confirmed = window.confirm("Are you sure you want to reset the form?");
-    if (!confirmed) return;
-    setFormData({
-      name: "",
-      category: "" as FoodCategory,
-      details: "",
-      ingredients: [],
-      portionPrices: [],
-      preparationTime: "",
-      available: false,
-      images: [],
-      videos: [],
-      imagePreviews: [],
-      videoPreviews: [],
-    });
-    setIngredientInput("");
-    setNewPortion({ portion: "", price: "" });
-    setFormErrors({
-      name: "",
-      category: "",
-      details: "",
-      ingredients: "",
-      portions: "",
-      preparationTime: "",
-    });
-  };
-
+  // Drag & drop support
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     const files = Array.from(e.dataTransfer.files);
-    const images: File[] = [];
-    const videos: string[] = [];
-
-    files.forEach(file => {
-      const url = URL.createObjectURL(file);
-      if (file.type.startsWith("video/")) {
-        videos.push(url);
-      } else {
-        images.push(file);
-      }
-    });
-
-    setFormData(prev => ({
-      ...prev,
-      images: [...prev.images, ...files],
-      imagePreviews: [...prev.imagePreviews, ...images.map(img => URL.createObjectURL(img))],
-      videoPreviews: [...prev.videoPreviews, ...videos],
-    }));
+    setSelectedFiles(prev => [...prev, ...files]);
   };
 
-  const handleRemoveImage = (index: number) => {
-    setFormData(prev => {
-      const newImages = [...prev.images];
-      const newPreviews = [...prev.imagePreviews];
-      newImages.splice(index, 1);
-      newPreviews.splice(index, 1);
-      return { ...prev, images: newImages, imagePreviews: newPreviews };
-    });
+  // Remove a new file by index
+  const handleRemoveFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleRemoveVideo = (index: number) => {
-    setFormData(prev => {
-      const newPreviews = [...prev.videoPreviews];
-      newPreviews.splice(index, 1);
-      return { ...prev, videoPreviews: newPreviews };
-    });
+  // Remove an existing attachment by index
+  const handleRemoveExisting = (index: number) => {
+    setExistingAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -280,14 +248,9 @@ export default function EditFoodItem() {
       toast.error("Please fill in all required fields.");
       return;
     }
-
     setLoading(true);
+
     try {
-      const urlToFile = async (url: string, filename: string, mimeType: string): Promise<File> => {
-        const res = await fetch(url);
-        const blob = await res.blob();
-        return new File([blob], filename, { type: mimeType });
-      };
       const formPayload = new FormData();
 
       formPayload.append("item_title", formData.name);
@@ -305,27 +268,26 @@ export default function EditFoodItem() {
         portion_price: Number(p.price),
       }))));
 
-      if (formData.imagePreviews.length > 0) {
-        const existingFiles = await Promise.all(
-          formData.imagePreviews.map((url, index) =>
-            urlToFile(url, `existing-image-${index}.jpg`, 'image/jpeg')
-          )
-        );
-        existingFiles.forEach(file => {
-          formPayload.append("files", file);
-        });
-      }
+      // 🔑 Convert existing attachments into File objects
+      const urlToFile = async (url: string): Promise<File> => {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const parts = url.split("/");
+        const filename = parts[parts.length - 1];
+        return new File([blob], filename, { type: blob.type });
+      };
 
-      if (formData.videoPreviews.length > 0) {
-        const existingVideoFiles = await Promise.all(
-          formData.videoPreviews.map((url, index) =>
-            urlToFile(url, `existing-video-${index}.mp4`, 'video/mp4')
-          )
-        );
-        existingVideoFiles.forEach(file => {
-          formPayload.append("files", file);
-        });
-      }
+      // Fetch and append existing files
+      const existingFilePromises = existingAttachments.map(a => urlToFile(a.url));
+      const existingFiles = await Promise.all(existingFilePromises);
+      existingFiles.forEach(file => {
+        formPayload.append("files", file);
+      });
+
+      // Append new files
+      selectedFiles.forEach(file => {
+        formPayload.append("files", file);
+      });
 
       await updateFoodItem(id, formPayload);
       toast.success("Food Item Updated Successfully!");
@@ -347,8 +309,8 @@ export default function EditFoodItem() {
               <Loader message="Fetching item data..." />
             ) : (
               <form onSubmit={handleSubmit}>
-                <div className="flex justify-between items-center">
-                  <h2 className="text-xl font-semibold mb-4">Edit Food Item</h2>
+                <div className="flex justify-between items-center mt-1 mb-5">
+                  <h2 className="text-xl font-semibold">Edit Food Item</h2>
                   <button type="button"
                     onClick={resetForm}
                     className={"text-sm text-gray-400 hover:text-gray-600 cursor-pointer"}
@@ -356,7 +318,7 @@ export default function EditFoodItem() {
                     RESET
                   </button>
                 </div>
-                <div className="mt-3">
+                <div className="mt-4">
                   <label className="font-semibold">
                     CATEGORIES <span className="text-red-500 animate-pulse text-lg" aria-hidden="true">*</span>
                   </label>
@@ -369,8 +331,8 @@ export default function EditFoodItem() {
                   >
                     <option value="">Select</option>
                     {dynamicCats.length > 0 &&
-                      dynamicCats.map(cat => (
-                        <option key={cat.id_int} value={cat.id_int.toString()}>
+                      [...dynamicCats].reverse().map(cat => (
+                        <option key={cat.id_int} value={cat.id_int.toString()} className="mt-1">
                           {cat.title}
                         </option>
                       ))
@@ -381,7 +343,7 @@ export default function EditFoodItem() {
                   )}
                 </div>
 
-                <div className="mt-3">
+                <div className="mt-4">
                   <label className="font-semibold">
                     ITEM NAME <span className="text-red-500 animate-pulse text-lg" aria-hidden="true">*</span>
                   </label>
@@ -399,7 +361,7 @@ export default function EditFoodItem() {
                   )}
                 </div>
 
-                <div className="mt-3">
+                <div className="max-h-24 mt-4">
                   <label className="font-semibold">
                     DESCRIPTION <span className="text-red-500 animate-pulse text-lg" aria-hidden="true">*</span>
                   </label>
@@ -408,7 +370,7 @@ export default function EditFoodItem() {
                     placeholder="Item description"
                     value={formData.details}
                     onChange={handleChange}
-                    rows={3}
+                    rows={2}
                     className="w-full border mt-1 p-2 rounded"
                   />
                   {formErrors.details && (
@@ -416,25 +378,25 @@ export default function EditFoodItem() {
                   )}
                 </div>
 
-                <div className="mt-3">
+                <div className="mt-4">
                   <label className="font-semibold">
                     INGREDIENTS <span className="text-red-500 animate-pulse text-lg" aria-hidden="true">*</span>
                   </label>
                   <div className="flex flex-wrap gap-2 mt-1">
                     {formData.ingredients.map(ing => (
-                      <span key={ing} className="bg-orange-100 px-3 py-1 rounded-xl text-sm">
+                      <span key={ing} className="bg-orange-100 px-3 py-1 mb-2 rounded-xl text-sm">
                         {ing.charAt(0).toUpperCase() + ing.slice(1)}
                         <button
                           type="button"
                           onClick={() => handleRemoveIngredient(ing)}
-                          className="ml-2 font-extrabold text-red-500"
+                          className="ml-1 text-lg font-semibold text-red-500"
                         >
                           ×
                         </button>
                       </span>
                     ))}
                   </div>
-                  <div className="flex mt-2">
+                  <div className="flex">
                     <input
                       type="text"
                       placeholder="Item ingredient"
@@ -455,7 +417,7 @@ export default function EditFoodItem() {
                   )}
                 </div>
 
-                <div className="mt-3">
+                <div className="mt-4">
                   <div className="grid grid-cols-2">
                     <label className="font-semibold ">
                       PORTIONS <span className="text-red-500 animate-pulse text-lg" aria-hidden="true">*</span>
@@ -463,7 +425,7 @@ export default function EditFoodItem() {
                   </div>
                   {/* Render existing portionPrices */}
                   {formData.portionPrices.map((p, idx) => (
-                    <div key={idx} className="flex flex-row gap-4 items-end w-full my-2">
+                    <div key={idx} className="flex flex-row gap-4 items-end w-full mt-1 my-3">
                       <div className="w-full md:w-1/2">
                         <input
                           type="text"
@@ -502,7 +464,7 @@ export default function EditFoodItem() {
                   ))}
 
                   {/* Input for adding a new portion */}
-                  <div className="flex flex-row gap-4 items-end w-full my-2">
+                  <div className="flex flex-row gap-4 items-end w-full">
                     <div className="w-full md:w-1/2">
                       <input
                         type="text"
@@ -544,7 +506,7 @@ export default function EditFoodItem() {
                 </div>
 
 
-                <div className="mt-3">
+                <div className="mt-4">
                   <label className="font-semibold" htmlFor="upload-image">UPLOAD PHOTO/VIDEO</label>
                   <div
                     onDrop={handleDrop}
@@ -560,8 +522,8 @@ export default function EditFoodItem() {
                         name="images"
                         accept="image/*,video/*"
                         multiple
-                        className="hidden"
                         onChange={handleChange}
+                        className="hidden"
                       />
                       <div className="flex flex-col items-center text-gray-400">
                         <div className="bg-orange-100 rounded-full px-3 py-1">
@@ -571,49 +533,64 @@ export default function EditFoodItem() {
                       </div>
                     </label>
 
-                    {/* Image Previews */}
-                    {formData.imagePreviews.map((preview, index) => (
-                      <div key={index} className="relative w-28 h-28">
-                        <Image
-                          src={preview}
-                          alt={`preview-${index}`}
-                          fill
-                          className="rounded object-cover"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveImage(index)}
-                          className="absolute top-1 right-1 bg-black/100 hover:bg-red-600 text-white rounded-full w-5 h-5 text-xs flex justify-center pt-0.5"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-
-                    {formData.videoPreviews.map((preview, index) => (
-                      <div key={`vid-${index}`} className="relative w-28 h-28">
-                        <video
-                          src={preview}
-                          className="rounded object-cover w-full h-full"
-                          autoPlay
-                          muted
-                          loop
-                          playsInline
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveVideo(index)}
-                          className="absolute top-1 right-1 bg-black/100 hover:bg-red-600 text-white rounded-full w-5 h-5 text-xs flex justify-center pt-0.5"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-
+                    <div className="flex flex-wrap gap-4">
+                      {/* Existing attachments (from DB) */}
+                      {existingAttachments.map((att, idx) =>
+                        att.type === "image" ? (
+                          <div key={`existing-img-${idx}`} className="relative w-28 h-28">
+                            <Image src={att.url} alt="existing" fill className="rounded object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveExisting(idx)}
+                              className="absolute top-1 right-1 bg-black/100 hover:bg-red-600 text-white rounded-full w-5 h-5 text-xs flex justify-center pt-0.5"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ) : (
+                          <div key={`existing-vid-${idx}`} className="relative w-28 h-28">
+                            <video src={att.url} autoPlay muted loop playsInline className="rounded object-cover w-full h-full" />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveExisting(idx)}
+                              className="absolute top-1 right-1 bg-black/100 hover:bg-red-600 text-white rounded-full w-5 h-5 text-xs flex justify-center pt-0.5"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        )
+                      )}
+                      {/* New files (in order) */}
+                      {selectedFiles.map((file, idx) =>
+                        file.type.startsWith("image/") ? (
+                          <div key={`new-img-${idx}`} className="relative w-28 h-28">
+                            <Image src={URL.createObjectURL(file)} alt="preview" fill className="rounded object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveFile(idx)}
+                              className="absolute top-1 right-1 bg-black/100 hover:bg-red-600 text-white rounded-full w-5 h-5 text-xs flex justify-center pt-0.5"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ) : file.type.startsWith("video/") ? (
+                          <div key={`new-vid-${idx}`} className="relative w-28 h-28">
+                            <video src={URL.createObjectURL(file)} autoPlay muted loop playsInline className="rounded object-cover w-full h-full" />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveFile(idx)}
+                              className="absolute top-1 right-1 bg-black/100 hover:bg-red-600 text-white rounded-full w-5 h-5 text-xs flex justify-center pt-0.5"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ) : null
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                <div className="mt-3">
+                <div className="mt-4">
                   <label className="font-semibold">
                     PREPARATION TIME <span className="text-red-500 animate-pulse text-lg" aria-hidden="true">*</span>
                   </label>
@@ -631,7 +608,7 @@ export default function EditFoodItem() {
                   )}
                 </div>
 
-                <div className="flex items-center gap-2 mt-3">
+                <div className="flex items-center gap-2 mt-4">
                   <label className="font-semibold">Available</label>
                   <button
                     type="button"

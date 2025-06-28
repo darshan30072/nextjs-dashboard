@@ -56,7 +56,9 @@ export default function Verification() {
     setResendDisabled(true);
 
     try {
-      const res = await fetch("https://food-admin.wappzo.com/api/verify-otp", {
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
+
+      const res = await fetch(`${baseUrl}/v1/auth/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -69,7 +71,7 @@ export default function Verification() {
         alert(data.message || "Failed to resend code");
       }
     } catch (error) {
-      console.log("Verification APT Error : " , error)
+      console.log("Verification APT Error : ", error)
     }
   };
 

@@ -13,7 +13,7 @@ export const deleteOrder = async (id: number): Promise<boolean> => {
         
         const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
 
-        const response = await fetch(`${baseUrl}/orders/${id}`, {
+        const response = await fetch(`${baseUrl}/v1/restaurant/order/${id}`, {
             method: 'DELETE',
             headers: {
                 accept: '*/*',

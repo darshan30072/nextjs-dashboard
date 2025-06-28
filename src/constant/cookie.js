@@ -1,13 +1,15 @@
-// Set a cookie with expiration in days
-export default function setCookie(cname, cvalue, exdays) {
+// Set a cookie with expiration in Hours
+export default function setCookie(cname, cvalue, exHours) {
   const d = new Date();
-  d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+  d.setTime(d.getTime() + exHours * 60 * 60 * 1000);
   const expires = "expires=" + d.toUTCString();
   document.cookie = `${cname}=${cvalue}; ${expires}; path=/`;
 }
 
 // Get a cookie value by name
 export function getCookie(cname) {
+  if (typeof document === "undefined") return ""; // Prevent server-side errors
+
   const name = cname + "=";
   const decodedCookie = decodeURIComponent(document.cookie);
   const ca = decodedCookie.split(";");

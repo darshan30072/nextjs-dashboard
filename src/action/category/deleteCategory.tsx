@@ -13,7 +13,7 @@ export async function deleteCategory(id: number) {
 
         const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
 
-        const response = await fetch(`${baseUrl}/api/delete-category/${id}`, {
+        const response = await fetch(`${baseUrl}/v1/restaurant/delete-category/${id}`, {
             method: "DELETE",
             headers: {
                 "Authorization": `Bearer ${token}`,

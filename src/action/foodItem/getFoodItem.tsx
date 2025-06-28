@@ -1,7 +1,7 @@
 "use client";
 import { getCookie } from "@/constant/cookie"
 
-export async function getFoodItem() {
+export async function getFoodItem(page: number = 1, limit: number = 6) {
 
   try {
     const token = getCookie('token');
@@ -13,7 +13,7 @@ export async function getFoodItem() {
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
 
-    const response = await fetch(`${baseUrl}/api/items`, {
+    const response = await fetch(`${baseUrl}/v1/restaurant/items?page=${page}&limit=${limit}`, {
       method: "GET",
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -22,14 +22,15 @@ export async function getFoodItem() {
     });
 
     const data = await response.json();
+    console.log("Raw API response:", data);
 
-    if (!response.ok || !Array.isArray(data)) {
+    if (!response.ok || !data?.data?.items) {
       throw new Error("Invalid response format");
     }
 
-    return data;
+    return data.data;
   } catch (error) {
     console.error("Error fetching FoodItems:", error);
-    return [];
+    return { items: [], pagination: { totalPages: 1, currentPage: 1 } };
   }
 }

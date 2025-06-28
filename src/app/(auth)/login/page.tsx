@@ -11,15 +11,23 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if( email !== "admin@gmail.com" || password !== "admin@123") {
-      alert("Access Denied: Only Admin can log in.")
+
+    if (!validateForm()) return;
+
+    if (email !== "admin@gmail.com" || password !== "admin@123") {
+      toast.error("Access Denied: Only Admin can log in.")
       return;
     }
     try {
-      const res = await fetch("https://food-admin.wappzo.com/api/login/admin", {
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
+
+      const res = await fetch(`${baseUrl}/v1/restaurant/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -30,11 +38,12 @@ export default function LoginPage() {
       const data = await res.json();
       console.log(data)
 
-      if (res.ok) {
+      console.log("Received token:", data.data.token);
+
+      if (res.ok && data?.data?.token) {
         console.log("Login successful:", data);
-        setCookie("token", data.token, 24)
+        setCookie("token", data.data.token, rememberMe ? 24 * 7 : 24);
         toast.success("Login Successful!");
-        // router.push("/dashboard");
         location.pathname = "/dashboard"
       } else {
         toast.error("Login Failed!");
@@ -44,6 +53,33 @@ export default function LoginPage() {
       toast.error("Login Failed...!");
     }
   };
+
+  const validateForm = () => {
+    let isValid = true;
+
+    if (!email) {
+      setEmailError("Email is required");
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      setEmailError("Invalid email format");
+      isValid = false;
+    } else {
+      setEmailError("");
+    }
+
+    if (!password) {
+      setPasswordError("Password is required");
+      isValid = false;
+    } else if (password.length < 6) {
+      setPasswordError("Password must be at least 6 characters");
+      isValid = false;
+    } else {
+      setPasswordError("");
+    }
+
+    return isValid;
+  };
+
 
   return (
     <div className="flex flex-col lg:flex-row items-center justify-center w-screen h-screen bg-white">
@@ -74,8 +110,13 @@ export default function LoginPage() {
                 placeholder="Enter Email"
                 className="w-full px-4 py-3 mt-1 rounded-xl bg-gray-100 text-gray-700 focus:outline-none text-sm lg:text-base"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setEmailError("");
+                }}
               />
+              {emailError && <span className="text-red-500 text-xs font-medium mt-1">{emailError}</span>}
+
             </div>
             <div className="relative">
               <label className="text-xs lg:text-sm text-gray-700 font-medium">PASSWORD</label>
@@ -84,8 +125,12 @@ export default function LoginPage() {
                 placeholder="Enter Password"
                 className="w-full px-4 py-3 mt-1 rounded-xl bg-gray-100 text-gray-700 focus:outline-none pr-12 text-sm lg:text-base"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setPasswordError("");
+                }}
               />
+              {passwordError && <span className="text-red-500 text-xs font-medium mt-1">{passwordError}</span>}
               <button
                 type="button"
                 className="absolute right-5 top-11 text-md text-blue-600 hover:text-blue-800 font-semibold select-none"
@@ -94,10 +139,24 @@ export default function LoginPage() {
                 {showPassword ? <BiShowAlt /> : <BiHide />}
               </button>
             </div>
-            <div className="text-right text-xs lg:text-sm text-gray-600 hover:underline">
-              <Link href="/forgot-password" className="text-blue-500 font-semibold">
-                Forgot Password?
-              </Link>
+            <div className="flex justify-between mb-8">
+              <div className="flex items-center gap-2 text-xs lg:text-sm">
+                <input
+                  type="checkbox"
+                  id="remember"
+                  checked={rememberMe}
+                  onChange={() => setRememberMe(prev => !prev)}
+                  className="w-4 h-4"
+                />
+                <label htmlFor="remember" className="text-gray-600 font-medium">
+                  Remember me
+                </label>
+              </div>
+              <div className="text-right text-xs lg:text-sm text-gray-600 hover:underline">
+                <Link href="/forgot-password" className="text-blue-500 font-semibold">
+                  Forgot Password?
+                </Link>
+              </div>
             </div>
             <button
               type="button"

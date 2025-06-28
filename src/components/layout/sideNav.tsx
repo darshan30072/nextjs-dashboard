@@ -9,7 +9,6 @@ import toast from 'react-hot-toast';
 export default function SideNav() {
 
   const handleLogout = () => {
-    console.log("logout")
     removeCookie('token');
     location.pathname = "/login";
     toast.success("Logout Successfully!");
@@ -23,7 +22,7 @@ export default function SideNav() {
           <Image src={"/Res_logo.png"} alt='F O P' width={100} height={100} />
         </div>
       </div>
-    
+
       {/* Navigation */}
       <div className="flex flex-col flex-grow px-4 py-6">
         <nav className="space-y-2">

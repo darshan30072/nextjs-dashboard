@@ -13,12 +13,11 @@ export async function updateFoodItem(id: number, formData: FormData) {
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
 
-    const response = await fetch(`${baseUrl}/api/update-item/${id}`, {
+    const response = await fetch(`${baseUrl}/v1/restaurant/update-item/${id}`, {
       method: "PUT",
       headers: {
         "Authorization": `Bearer ${token}`,
         // NOT set 'Content-Type' header explicitly for FormData, browser handles it automatically
-
       },
       body: formData,
     });

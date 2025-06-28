@@ -16,7 +16,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const timeout = setTimeout(() => {
       setStatsLoading(false);
-    }, 500); // simulate 0.5 second loading
+    }); // simulate 0.5 second loading
     return () => clearTimeout(timeout);
   }, []);
 
@@ -29,11 +29,11 @@ export default function DashboardPage() {
             <Loader message="Loading Stats..." />
           </div>
         ) : (
-          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {stats.map((stat, idx) => (
               <div
                 key={idx}
-                className="flex items-center bg-white p-4 rounded-xl shadow"
+                className="flex items-center bg-white rounded-xl shadow font-bold border border-gray-200 p-4 sm:p-6"
               >
                 <div className="bg-orange-100 rounded-full px-3 py-3 me-3">
                   <span className="items-center text-orange-500 text-2xl font-bold">
@@ -46,7 +46,7 @@ export default function DashboardPage() {
                 </div>
               </div>
             ))}
-          </section>
+          </div>
         )}
       </div>
     </div>
