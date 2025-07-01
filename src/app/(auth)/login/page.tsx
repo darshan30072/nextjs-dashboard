@@ -36,14 +36,10 @@ export default function LoginPage() {
         }),
       });
       const data = await res.json();
-      console.log(data)
-
-      console.log("Received token:", data.data.token);
 
       if (res.ok && data?.data?.token) {
-        console.log("Login successful:", data);
         setCookie("token", data.data.token, rememberMe ? 24 * 7 : 24);
-        toast.success("Login Successful!");
+        // toast.success("Login Successful!");
         location.pathname = "/dashboard"
       } else {
         toast.error("Login Failed!");

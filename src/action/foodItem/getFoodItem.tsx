@@ -5,7 +5,6 @@ export async function getFoodItem(page: number = 1, limit: number = 6) {
 
   try {
     const token = getCookie('token');
-    console.log("Token: ", token);
 
     if (!token) {
       throw new Error("Unauthorized: No token found");
@@ -22,7 +21,6 @@ export async function getFoodItem(page: number = 1, limit: number = 6) {
     });
 
     const data = await response.json();
-    console.log("Raw API response:", data);
 
     if (!response.ok || !data?.data?.items) {
       throw new Error("Invalid response format");

@@ -36,6 +36,11 @@ export default function EditFoodItem() {
   // For existing attachments (from DB)
   const [existingAttachments, setExistingAttachments] = useState<ExistingAttachment[]>([]);
 
+  const [initialFormData, setInitialFormData] = useState<typeof formData | null>(null);
+  const [initialAttachments, setInitialAttachments] = useState<ExistingAttachment[]>([]);
+
+  const isEqual = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+
   const [formErrors, setFormErrors] = useState({
     name: "",
     category: "",
@@ -114,7 +119,7 @@ export default function EditFoodItem() {
       setLoading(true);
       try {
         const data = await getFoodItemById(id);
-        setFormData({
+        const preparedFormData = {
           name: data.item_title || "",
           category: data.category_id_int?.toString() || "",
           details: data.item_description || "",
@@ -129,14 +134,13 @@ export default function EditFoodItem() {
               price: String(p.portion_price || ""),
             }))
             : [],
-          preparationTime:
-            data.item_prepartion_time_min != null
-              ? String(data.item_prepartion_time_min)
-              : "",
+          preparationTime: data.item_prepartion_time_min != null ? String(data.item_prepartion_time_min) : "",
           available: data.is_item_available_for_order === 1,
-        });
+        };
 
-        // Prepare existing attachments in order (if your API provides order info)
+        setFormData(preparedFormData);
+        setInitialFormData(preparedFormData);
+
         const attachments: ExistingAttachment[] = (data.attachments || []).map((att: { file_logical_name: string; }) => {
           const url = `https://food-admin.wappzo.com/uploads/items/${att.file_logical_name}`;
           if (/\.(mp4|webm|ogg|mov)$/i.test(att.file_logical_name)) {
@@ -145,6 +149,7 @@ export default function EditFoodItem() {
           return { url, type: 'image' };
         });
         setExistingAttachments(attachments);
+        setInitialAttachments(attachments);
       } catch (err) {
         toast.error("Failed to fetch food item.");
         console.error(err);
@@ -152,6 +157,7 @@ export default function EditFoodItem() {
         setLoading(false);
       }
     };
+
     fetchFoodItem();
   }, [id]);
 
@@ -248,6 +254,22 @@ export default function EditFoodItem() {
       toast.error("Please fill in all required fields.");
       return;
     }
+
+    // Check if form data and attachments match initial
+    const currentAttachments = existingAttachments;
+    const initialAttachmentsNames = initialAttachments.map(a => a.url.split("/").pop());
+    const currentAttachmentsNames = currentAttachments.map(a => a.url.split("/").pop());
+
+    const isSameFormData = isEqual(formData, initialFormData);
+    const isSameAttachments = isEqual(currentAttachmentsNames, initialAttachmentsNames);
+    const isSameFiles = selectedFiles.length === 0;
+
+    if (isSameFormData && isSameAttachments && isSameFiles) {
+      // toast("No changes detected. Nothing to update.");
+      router.push("/foodItem");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -268,26 +290,21 @@ export default function EditFoodItem() {
         portion_price: Number(p.price),
       }))));
 
-      // 🔑 Convert existing attachments into File objects
-      const urlToFile = async (url: string): Promise<File> => {
-        const response = await fetch(url);
-        const blob = await response.blob();
-        const parts = url.split("/");
-        const filename = parts[parts.length - 1];
-        return new File([blob], filename, { type: blob.type });
-      };
-
-      // Fetch and append existing files
-      const existingFilePromises = existingAttachments.map(a => urlToFile(a.url));
-      const existingFiles = await Promise.all(existingFilePromises);
-      existingFiles.forEach(file => {
-        formPayload.append("files", file);
-      });
-
-      // Append new files
+      // 🔑 Always send what you want to keep
+      formPayload.append(
+        "existing_attachments",
+        JSON.stringify(
+          existingAttachments.map(a => {
+            const parts = a.url.split("/");
+            return parts[parts.length - 1];
+          })
+        )
+      );
+      // Add new files in order
       selectedFiles.forEach(file => {
         formPayload.append("files", file);
       });
+
 
       await updateFoodItem(id, formPayload);
       toast.success("Food Item Updated Successfully!");

@@ -5,7 +5,6 @@ import { getCookie } from "@/constant/cookie";
 export async function updateAvailability(id: number, is_item_available_for_order: boolean) {
     try {
         const token = getCookie('token');
-        console.log("Token : ", token);
 
         if (!token) {
             throw new Error("Unauthorized: No token found");
@@ -23,7 +22,6 @@ export async function updateAvailability(id: number, is_item_available_for_order
         });
 
         const data = await response.json();
-        console.log("Data : ", data);
 
         if (!response.ok) {
             console.error("Response not OK", data);

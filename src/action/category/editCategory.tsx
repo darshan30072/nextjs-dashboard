@@ -5,7 +5,6 @@ import { getCookie } from "@/constant/cookie";
 export async function editCategory(id: number, title: string) {
     try {
         const token = getCookie('token');
-        console.log("Token : ", token);
 
         if (!token) {
             throw new Error("Unauthorized: No token found");

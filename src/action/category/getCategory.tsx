@@ -6,7 +6,6 @@ export async function getCategory(page: number = 1, limit: number = 8): Promise<
 
   try {
     const token = getCookie('token');
-    console.log("Token : ", token)
 
     if (!token) {
       throw new Error("Unauthorized: No token found");

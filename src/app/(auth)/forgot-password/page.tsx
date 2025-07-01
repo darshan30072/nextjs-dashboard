@@ -13,21 +13,20 @@ export default function ForgotPasswordPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // if (email !== "admin@gmail.com") {
-    //   toast.error("Email not found.")
-    //   return;
-    // }
+    if (email !== "admin@gmail.com") {
+      toast.error("Email not found.")
+      return;
+    }
     try {
       const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
 
-    const res = await fetch(`${baseUrl}/v1/auth/send-otp`, {
+    const res = await fetch(`${baseUrl}/v1/send-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
 
       const data = await res.json();
-      console.log(data)
 
       if (res.ok) {
         // Save email to localStorage so you can access it in verification page

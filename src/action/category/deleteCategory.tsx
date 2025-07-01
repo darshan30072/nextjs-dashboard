@@ -5,7 +5,6 @@ import { getCookie } from "@/constant/cookie";
 export async function deleteCategory(id: number) {
     try {
         const token = getCookie('token');
-        console.log(token)
 
         if (!token) {
             throw new Error("Unauthorized: No token found");

@@ -42,7 +42,6 @@ export default function OrdersPage() {
     const fetchOrders = async () => {
       try {
         const data = await getOrders();
-        console.log('One raw order:', data[0]);
 
         const transformedOrders: Order[] = (data as RawOrder[]).map((item) => ({
           id: item.id_int,
@@ -76,8 +75,6 @@ export default function OrdersPage() {
         }));
 
         setOrders(transformedOrders);
-        console.log('Fetched orders:', transformedOrders);
-
       } catch (err) {
         console.error("Failed to fetch orders:", err);
       }

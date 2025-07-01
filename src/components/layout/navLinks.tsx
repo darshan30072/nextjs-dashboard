@@ -9,34 +9,39 @@ import { PiShoppingCartSimpleFill } from 'react-icons/pi';
 
 const links = [
   { name: 'Dashboard', href: '/dashboard', icon: <GoHomeFill /> },
-  { name: 'Orders', href: '/orders', icon: <PiShoppingCartSimpleFill  /> },
-  { name: 'Categories', href: '/categories', icon: <BiSolidCategory  /> },
-  { name: 'Food Items', href: '/foodItem', icon: <MdFastfood  /> },
+  { name: 'Orders', href: '/orders', icon: <PiShoppingCartSimpleFill /> },
+  { name: 'Categories', href: '/categories', icon: <BiSolidCategory /> },
+  { name: 'Food Items', href: '/foodItem', icon: <MdFastfood /> },
 ];
 
-export default function NavLinks() {
+export default function NavLinks({ collapsed }: { collapsed: boolean }) {
   const pathname = usePathname();
 
   return (
-    <>
+    <ul className="space-y-1">
       {links.map(({ name, href, icon }) => {
         const isActive = pathname === href;
+
         return (
-          <Link
-            key={name}
-            href={href}
-            className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium ${isActive
-              ? 'bg-orange-100 text-orange-500'
-              : 'text-gray-700 hover:bg-gray-100'
-              }`}
-          >
-            <div className='text-lg'>
-              {icon}
-            </div>
-            {name}
-          </Link>
+          <li key={name}>
+            <Link
+              href={href}
+              className={`flex items-center gap-3 rounded-md px-3 py-2 font-medium transition-colors duration-200 
+                ${isActive ? 'bg-orange-100 text-orange-500' : 'text-gray-700 hover:bg-gray-100'}`}
+            >
+              <div className={`text-xl transition-all duration-200 ${collapsed ? 'mx-auto' : ''}`}>
+                {icon}
+              </div>
+              <span
+                className={`whitespace-nowrap overflow-hidden transition-all duration-300 
+                ${collapsed ? 'opacity-0 w-0' : 'opacity-100 w-auto'}`}
+              >
+                {name}
+              </span>
+            </Link>
+          </li>
         );
       })}
-    </>
+    </ul>
   );
 }

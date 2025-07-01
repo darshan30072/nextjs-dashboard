@@ -5,7 +5,7 @@ import { deleteCategory } from "@/action/category/deleteCategory";
 import { editCategory } from "@/action/category/editCategory";
 import { getCategory } from "@/action/category/getCategory";
 import { Category } from "@/interface/categoryTypes";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FaCheck, FaEdit } from "react-icons/fa";
 import { ImCancelCircle } from "react-icons/im";
 import { MdDelete } from "react-icons/md";
@@ -25,6 +25,8 @@ export default function CategoriesList() {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [searchTerm, setSearchTerm] = useState("");
+    const addInputRef = useRef<HTMLInputElement>(null);
+    const editInputRef = useRef<HTMLInputElement>(null);
     const itemsPerPage = 8;
 
     const fetchCategory = async (page: number) => {
@@ -49,6 +51,19 @@ export default function CategoriesList() {
         fetchCategory(currentPage);
     }, [currentPage]);
 
+
+    useEffect(() => {
+        if (showModal && addInputRef.current) {
+            addInputRef.current.focus();
+        }
+    }, [showModal]);
+
+    useEffect(() => {
+        if (editId !== null && editInputRef.current) {
+            editInputRef.current.focus();
+        }
+    }, [editId]);
+
     const handleAddCategory = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newCategory.trim()) {
@@ -71,6 +86,14 @@ export default function CategoriesList() {
     const handleUpdate = async (id: number) => {
         const trimmedInput = editInput.trim().toUpperCase();
         if (!trimmedInput) return;
+
+        const currentCategory = categories.find(cat => cat.id_int === id);
+        if(currentCategory && currentCategory.title.toUpperCase() === trimmedInput) {
+            // No change made, just exit mode without toast
+            setEditId(null);
+            setEditInput("");
+            return;
+        }
 
         try {
             await editCategory(id, trimmedInput);
@@ -177,72 +200,73 @@ export default function CategoriesList() {
                             </tr>
                         ) : (
                             filteredCategories.map((cat, index) => (
-                                    <tr key={cat.id_int} className="border-t border-b border-gray-300">
-                                        <td className="py-3 px-4 font-semibold text-gray-500">
-                                            {(currentPage - 1) * itemsPerPage + index + 1}
-                                        </td>
-                                        <td className="py-3 px-4">
-                                            {editId === cat.id_int ? (
-                                                <input
-                                                    value={editInput}
-                                                    onChange={(e) => setEditInput(e.target.value)}
-                                                    className="w-full border px-2 py-1 rounded"
-                                                />
-                                            ) : (
-                                                <span className="font-semibold">{cat.title}</span>
-                                            )}
-                                        </td>
-                                        <td className="py-3 px-4">
-                                            <div
-                                                className={`flex gap-1 justify-between items-center text-md font-semibold py-1 rounded ${cat.is_active
-                                                    ? "text-green-700"
-                                                    : "text-red-700"
-                                                    }`}
-                                            >
-                                                <div className="flex gap-3">
-                                                    <button
-                                                        type="button"
-                                                        role="switch"
-                                                        aria-checked={cat.is_active}
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleToggle(cat.id_int, cat.is_active);
-                                                        }}
-                                                        className={`cursor-pointer relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 ${cat.is_active ? "bg-green-500" : "bg-red-500"
+                                <tr key={cat.id_int} className="border-t border-b border-gray-300">
+                                    <td className="py-3 px-4 font-semibold text-gray-500">
+                                        {(currentPage - 1) * itemsPerPage + index + 1}
+                                    </td>
+                                    <td className="py-3 px-4">
+                                        {editId === cat.id_int ? (
+                                            <input
+                                                ref={editInputRef}
+                                                value={editInput}
+                                                onChange={(e) => setEditInput(e.target.value)}
+                                                className="w-full px-2 py-1 rounded"
+                                            />
+                                        ) : (
+                                            <span className="font-semibold">{cat.title}</span>
+                                        )}
+                                    </td>
+                                    <td className="py-3 px-4">
+                                        <div
+                                            className={`flex gap-1 justify-between items-center text-md font-semibold py-1 rounded ${cat.is_active
+                                                ? "text-green-700"
+                                                : "text-red-700"
+                                                }`}
+                                        >
+                                            <div className="flex gap-3">
+                                                <button
+                                                    type="button"
+                                                    role="switch"
+                                                    aria-checked={cat.is_active}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleToggle(cat.id_int, cat.is_active);
+                                                    }}
+                                                    className={`cursor-pointer relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 ${cat.is_active ? "bg-green-500" : "bg-red-500"
+                                                        }`}
+                                                >
+                                                    <span
+                                                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-300 ${cat.is_active ? "translate-x-6" : "translate-x-1"
                                                             }`}
-                                                    >
-                                                        <span
-                                                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-300 ${cat.is_active ? "translate-x-6" : "translate-x-1"
-                                                                }`}
-                                                        />
-                                                    </button>
-                                                    <div>{cat.is_active ? "Active" : "Inactive"}</div>
-                                                </div>
+                                                    />
+                                                </button>
+                                                <div>{cat.is_active ? "Active" : "Inactive"}</div>
                                             </div>
-                                        </td>
-                                        <td className="py-4 px-4 flex gap-3 items-center text-lg">
-                                            {editId === cat.id_int ? (
-                                                <>
-                                                    <button onClick={() => handleUpdate(cat.id_int)} className="text-green-600 hover:text-green-500">
-                                                        <FaCheck />
-                                                    </button>
-                                                    <button onClick={handleCancel} className="text-red-500 hover:text-red-700">
-                                                        <ImCancelCircle />
-                                                    </button>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <button onClick={() => handleEdit(cat.id_int)} className="text-orange-500 hover:text-orange-600">
-                                                        <FaEdit />
-                                                    </button>
-                                                    <button onClick={() => handleDelete(cat.id_int)} className="text-red-500 hover:text-red-600">
-                                                        <MdDelete />
-                                                    </button>
-                                                </>
-                                            )}
-                                        </td>
-                                    </tr>
-                                ))
+                                        </div>
+                                    </td>
+                                    <td className="py-4 px-4 flex gap-3 items-center text-lg">
+                                        {editId === cat.id_int ? (
+                                            <>
+                                                <button onClick={() => handleUpdate(cat.id_int)} className="text-green-600 hover:text-green-500">
+                                                    <FaCheck />
+                                                </button>
+                                                <button onClick={handleCancel} className="text-red-500 hover:text-red-700">
+                                                    <ImCancelCircle />
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <button onClick={() => handleEdit(cat.id_int)} className="text-orange-500 hover:text-orange-600">
+                                                    <FaEdit />
+                                                </button>
+                                                <button onClick={() => handleDelete(cat.id_int)} className="text-red-500 hover:text-red-600">
+                                                    <MdDelete />
+                                                </button>
+                                            </>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))
                         )}
                     </tbody>
                 </table>
@@ -285,6 +309,7 @@ export default function CategoriesList() {
                         <div className="bg-white rounded-xl max-w-xl w-full p-10 relative animate-slideUp">
                             <h2 className="text-lg font-semibold mb-4">Add New Category</h2>
                             <input
+                                ref={addInputRef}
                                 type="text"
                                 placeholder="Category title"
                                 value={newCategory}

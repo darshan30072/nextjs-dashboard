@@ -71,7 +71,7 @@ export default function Verification() {
         alert(data.message || "Failed to resend code");
       }
     } catch (error) {
-      console.log("Verification APT Error : ", error)
+      console.error("Verification APT Error : ", error)
     }
   };
 
@@ -102,7 +102,7 @@ export default function Verification() {
         alert(data.message || "Invalid verification code. Please try again.");
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
     } finally {
       setLoading(false);
     }

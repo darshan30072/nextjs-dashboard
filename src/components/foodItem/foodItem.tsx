@@ -56,21 +56,17 @@ const FoodItemList: React.FC<FoodListProps> = () => {
       const { items, pagination } = await getFoodItem(currentPage, itemsPerPage);
       const { categories = [] } = await getCategory();
 
-      console.log("Fetched data:", items);
-
       const categoryMap = new Map<number, string>();
       categories.forEach((cat: { id_int: number; title: string; }) => {
         const id = Number(cat?.id_int);
         if (!isNaN(id)) {
           categoryMap.set(id, cat.title);
         } else {
-          console.log("Invalid category id:", cat);
+          console.error("Invalid category id:", cat);
         }
       });
 
       const mappedFood: FoodItem[] = (items as RawFoodItem[]).map((item) => {
-        console.log("Raw item:", item);
-
         const attachment = item.attachments?.[0];
         const fileName = attachment?.file_logical_name || "";
         const isVideo = /\.(mp4|webm|ogg)$/i.test(fileName);
@@ -112,7 +108,7 @@ const FoodItemList: React.FC<FoodListProps> = () => {
       setFoodList(mappedFood);
       setTotalPages(pagination.totalPages);
     } catch (err) {
-      console.log("Error fetching data : ", err)
+      console.error("Error fetching data : ", err)
     } finally {
       setIsLoading(false);
     }
@@ -217,8 +213,8 @@ const FoodItemList: React.FC<FoodListProps> = () => {
               </Swiper>
 
               <div className="p-4">
-                <div className="flex justify-between">
-                  <h2 className="text-lg font-semibold">{food.name}</h2>
+                <div className="flex justify-between text-lg">
+                  <h2 className="font-semibold">{food.name}</h2>
                   <span className="text-orange-500 font-bold">
                     ₹{food.portionPrices?.[0]?.price ?? 0}
                   </span>
@@ -237,7 +233,7 @@ const FoodItemList: React.FC<FoodListProps> = () => {
                     </button>
                     <span>{food.available ? "Available" : "Unavailable"}</span>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 text-lg">
                     <button onClick={(e) => { e.stopPropagation(); router.push(`/foodItem/edit/${food.id}`); }}>
                       <FaEdit className="text-orange-500 hover:text-orange-600" />
                     </button>

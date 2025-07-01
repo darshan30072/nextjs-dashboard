@@ -5,7 +5,6 @@ export async function getOrders() {
 
   try {
     const token = getCookie('token');
-    console.log(token)
 
     if (!token) {
       throw new Error("Unauthorized: No token found");
@@ -22,7 +21,6 @@ export async function getOrders() {
     });
 
     const data = await response.json();
-    console.log("API raw response...:", data);
 
     if (!response.ok) {
       throw new Error(data?.message || "Failed to fetch orders");

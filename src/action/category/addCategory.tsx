@@ -4,7 +4,6 @@ export async function addCategory(title: string) {
     try {
         // Get token from cookies
         const token = getCookie('token');
-        console.log(token)
 
         if (!token) {
             throw new Error("Unauthorized: No token found");

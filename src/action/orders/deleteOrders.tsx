@@ -5,7 +5,6 @@ export const deleteOrder = async (id: number): Promise<boolean> => {
     try {
 
         const token = getCookie('token');
-        console.log(token)
 
         if (!token) {
             throw new Error("Unauthorized: No token found");
@@ -24,8 +23,7 @@ export const deleteOrder = async (id: number): Promise<boolean> => {
             throw new Error("Failed to delete order");
         }
 
-        const data = await response.json();
-        console.log("Delete result:", data);
+        await response.json();
         return true;
     } catch (error) {
         console.error("Error deleting order:", error);

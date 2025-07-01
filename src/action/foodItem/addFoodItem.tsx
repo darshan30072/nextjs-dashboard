@@ -14,7 +14,6 @@ export async function addFoodItem(formData: {
 }) {
     try {
         const token = getCookie('token');
-        console.log("Token being sent:", token);
         if (!token) throw new Error("Unauthorized: No token found");
 
         const preparationTime = parseInt(formData.preparationTime);
@@ -54,7 +53,6 @@ export async function addFoodItem(formData: {
         });
 
         const data = await response.json();
-        console.log("Data : ", data);
 
         if (!response.ok) {
             throw new Error(data.message || "Failed to add item.");
