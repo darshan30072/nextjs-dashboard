@@ -12,7 +12,7 @@ const sen = Sen({
 export const metadata: Metadata = {
   title: "Restaurant Food Ordering",
   description: "Codevolution",
-  icons: "/logo.ico",
+  icons: "/icons/logo.ico",
 };
 
 export default function RootLayout({

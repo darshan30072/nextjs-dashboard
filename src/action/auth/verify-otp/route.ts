@@ -1,5 +1,5 @@
-// /app/api/verify/route.ts
 import { NextRequest, NextResponse } from "next/server";
+import axios from "axios";
 
 export async function POST(req: NextRequest) {
   try {
@@ -7,21 +7,24 @@ export async function POST(req: NextRequest) {
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
 
-    const response = await fetch(`${baseUrl}/v1/auth/verify-otp`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ otp, email }),
-    });
+    const response = await axios.post(
+      `${baseUrl}/v1/auth/verify-otp`,
+      { otp, email },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      return NextResponse.json(data, { status: response.status });
-    }
-
-    return NextResponse.json(data, { status: 200 });
+    return NextResponse.json(response.data, { status: 200 });
   } catch (error) {
     console.error("Verify-OTP API error:", error);
+
+    if (axios.isAxiosError(error) && error.response) {
+      return NextResponse.json(error.response.data, { status: error.response.status });
+    }
+
     return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
   }
 }

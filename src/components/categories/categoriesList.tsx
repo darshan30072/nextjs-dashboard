@@ -1,9 +1,5 @@
 "use client";
 
-import { addCategory } from "@/action/category/addCategory";
-import { deleteCategory } from "@/action/category/deleteCategory";
-import { editCategory } from "@/action/category/editCategory";
-import { getCategory } from "@/action/category/getCategory";
 import { Category } from "@/interface/categoryTypes";
 import { useEffect, useRef, useState } from "react";
 import { FaCheck, FaEdit } from "react-icons/fa";
@@ -13,6 +9,10 @@ import toast from "react-hot-toast";
 import Loader from "../loader";
 import { GrFormPrevious, GrFormNext } from "react-icons/gr";
 import { editAvailability } from "@/action/category/editAvailability";
+import { getCategory } from "@/action/category/getCategory";
+import { addCategory } from "@/action/category/addCategory";
+import { editCategory } from "@/action/category/editCategory";
+import { deleteCategory } from "@/action/category/deleteCategory";
 
 export default function CategoriesList() {
     const [categories, setCategories] = useState<Category[]>([]);

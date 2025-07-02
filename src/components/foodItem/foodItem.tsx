@@ -9,17 +9,14 @@ import Image from "next/image";
 import { FaEdit } from "react-icons/fa";
 import { MdDelete } from "react-icons/md";
 
-import { getFoodItem } from "@/action/foodItem/getFoodItem";
-import { deleteFoodItem } from "@/action/foodItem/deleteFoodItem";
-import { updateAvailability } from "@/action/foodItem/updateAvailability";
-import { getCategory } from "@/action/category/getCategory";
-
-// import useCategories from "./useCategories";
-// import MultiSelectDropdown from "./categoriesDropdown";
 import FoodItemModal from "./foodItemModal";
 import Loader from "../loader";
 import { FoodItem, FoodListProps } from "@/interface/foodTypes";
 import { GrFormPrevious, GrFormNext } from "react-icons/gr";
+import { getCategory } from "@/action/category/getCategory";
+import { deleteFoodItem } from "@/action/foodItem/deleteFoodItem";
+import { getFoodItem } from "@/action/foodItem/getFoodItem";
+import { updateAvailability } from "@/action/foodItem/updateAvailability";
 
 type RawFoodItem = {
   id_int: number;
@@ -72,7 +69,7 @@ const FoodItemList: React.FC<FoodListProps> = () => {
         const isVideo = /\.(mp4|webm|ogg)$/i.test(fileName);
         const fileUrl = attachment
           ? `https://food-admin.wappzo.com/uploads/items/${fileName}`
-          : "/placeholder.jpg";
+          : "/images/placeholder.jpg";
         return {
           id: item.id_int,
           name: item.item_title,
@@ -142,7 +139,7 @@ const FoodItemList: React.FC<FoodListProps> = () => {
       setFoodList(prev =>
         prev.map(item => item.id === id ? { ...item, available: newAvailability } : item)
       );
-      toast.success(`Marked as ${newAvailability ? "Available" : "Unavailable"}`);
+      toast.success(`Food Item marked as ${newAvailability ? "Available" : "Unavailable"}`);
     } catch (err) {
       toast.error("Failed to update availability");
       console.error(err);

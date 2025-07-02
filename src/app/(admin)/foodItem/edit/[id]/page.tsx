@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { FoodCategory } from "@/interface/foodTypes";
-import { getFoodItemById } from "@/action/foodItem/getFoodItemById";
-import { updateFoodItem } from "@/action/foodItem/updateFoodItem";
 import Image from "next/image";
 import { IoMdAddCircle } from "react-icons/io";
 import useCategories from "@/components/foodItem/useCategories";
 import Loader from "@/components/loader";
 import toast from "react-hot-toast";
+import { getFoodItemById } from "@/action/foodItem/getFoodItemById";
+import { updateFoodItem } from "@/action/foodItem/updateFoodItem";
 
 type PortionPrice = {
   portion: string;

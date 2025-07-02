@@ -1,23 +1,18 @@
 // /app/api/login/route.ts
 import { NextRequest, NextResponse } from "next/server";
+import axios from "axios";
+import axiosInstance from "@/utils/services/axiosInstance";
 
 export async function POST(req: NextRequest) {
   try {
     const { email, password } = await req.json();
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
+    const response = await axiosInstance.post(
+      "/v1/restaurant/login",
+      { email, password },
+    );
 
-    const response = await fetch(`${baseUrl}/v1/restaurant/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return NextResponse.json(data, { status: response.status });
-    }
+    const data = response.data;
 
     const res = NextResponse.json({ message: "Login successful", token: data.token });
 
@@ -32,6 +27,17 @@ export async function POST(req: NextRequest) {
     return res;
   } catch (error) {
     console.error("Login API error:", error);
-    return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+
+    if (axios.isAxiosError(error) && error.response) {
+      return NextResponse.json(
+        error.response.data,
+        { status: error.response.status }
+      );
+    }
+
+    return NextResponse.json(
+      { message: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }

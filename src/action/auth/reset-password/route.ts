@@ -1,5 +1,5 @@
-// /app/api/reset-password/route.ts
 import { NextRequest, NextResponse } from "next/server";
+import axios from "axios";
 
 export async function POST(req: NextRequest) {
   try {
@@ -7,23 +7,29 @@ export async function POST(req: NextRequest) {
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
 
-    const response = await fetch(`${baseUrl}/v1/auth/reset-password`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, newpassword }),
-    });
+    const response = await axios.post(
+      `${baseUrl}/v1/auth/reset-password`,
+      { email, newpassword },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
-    const data = await response.json();
+    const data = response.data;
 
-    if (!response.ok) {
-      return NextResponse.json(data, { status: response.status });
+    return NextResponse.json(
+      { message: "Reset-password successful", token: data.token },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Reset-password API error:", error);
+
+    if (axios.isAxiosError(error) && error.response) {
+      return NextResponse.json(error.response.data, { status: error.response.status });
     }
 
-    const res = NextResponse.json({ message: "Reset-password successful", token: data.token });
-
-    return res;
-  } catch (error) {
-    console.error("Login API error:", error);
     return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
   }
 }
