@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import axios from "axios";
+import axiosInstance from "@/utils/services/axiosInstance";
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, password: newpassword } = await req.json();
+    const { email, password: newPassword } = await req.json();
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
-
-    const response = await axios.post(
-      `${baseUrl}/v1/auth/reset-password`,
-      { email, newpassword },
+    const response = await axiosInstance.post("/v1/reset-password", { email, newPassword },
       {
         headers: {
           "Content-Type": "application/json",
@@ -20,7 +17,7 @@ export async function POST(req: NextRequest) {
     const data = response.data;
 
     return NextResponse.json(
-      { message: "Reset-password successful", token: data.token },
+      { message: "Reset-password successful", token: data.token, statusCode: 200 },
       { status: 200 }
     );
   } catch (error) {

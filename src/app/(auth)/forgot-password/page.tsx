@@ -1,5 +1,6 @@
 "use client";
 
+import axiosInstance from "@/utils/services/axiosInstance";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -7,36 +8,47 @@ import toast from "react-hot-toast";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  const validateForm = () => {
+    let isValid = true;
+
+    if (!email) {
+      setEmailError("Email is required");
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      setEmailError("Invalid email format");
+      isValid = false;
+    } else {
+      setEmailError("");
+    }
+    return isValid;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validateForm()) return;
+
     setLoading(true);
-    if (email !== "admin@gmail.com") {
-      toast.error("Email not found.")
-      return;
-    }
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
+      const response = await axiosInstance.post("/v1/send-otp", { email });
 
-    const res = await fetch(`${baseUrl}/v1/send-otp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
+      const data = response.data;
 
-      const data = await res.json();
-
-      if (res.ok) {
+      if (data.statusCode === 200) {
         // Save email to localStorage so you can access it in verification page
         localStorage.setItem("resetEmail", email);
         router.push("/verification");
+        toast.success(data.message);
       } else {
-        toast.error(data.message || "Failed to send OTP");
+        toast.error(data.message || "Failed to send otp");
       }
     } catch (error) {
       console.error("Error sending OTP:", error);
+      toast.error("Something went wrong while sending OTP");
     } finally {
       setLoading(false);
     }
@@ -47,7 +59,7 @@ export default function ForgotPasswordPage() {
       {/* Left: Splash Image (hidden on mobile/tablet) */}
       <div className="hidden lg:flex w-full lg:w-1/2 justify-center items-center p-4">
         <Image
-          src={"/Splash-screen2.jpg"}
+          src={"/images/Splash-screen.jpg"}
           alt="Splash Screen"
           width={500}
           height={500}
@@ -71,9 +83,13 @@ export default function ForgotPasswordPage() {
                 placeholder="example@gmail.com"
                 className="w-full px-4 py-3 mt-1 rounded-xl bg-gray-100 text-gray-700 focus:outline-none text-sm lg:text-base"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setEmailError("");
+                }}
               />
+              {emailError && <span className="text-red-500 text-xs font-semibold mt-1">{emailError}</span>}
+
             </div>
             <button
               type="submit"

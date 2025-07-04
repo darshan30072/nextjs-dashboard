@@ -10,6 +10,7 @@ import OrderDetails from '@/components/orders/orderDetails';
 
 interface RawOrder {
   id_int: number;
+  order_no: string;
   user_id_int: string;
   order_amount: number;
   order_discount: number;
@@ -45,6 +46,7 @@ export default function OrdersPage() {
 
         const transformedOrders: Order[] = (data as RawOrder[]).map((item) => ({
           id: item.id_int,
+          order_no: item.order_no, 
           userId: Number(item.user_id_int),
           date: item.created_at,
           amount: item.order_amount,
@@ -110,18 +112,18 @@ export default function OrdersPage() {
     <div className="p-4 sm:p-5 overflow-y-auto [&::-webkit-scrollbar]:hidden scrollbar-hide">
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-12 gap-6">
         {/* Order List */}
-        <div className="xl:col-span-5 bg-white rounded-xl shadow font-bold border border-gray-200 p-4 sm:p-6">
+        <div className="xl:col-span-6 bg-white rounded-xl shadow font-bold border border-gray-200 p-4 sm:p-6">
           <h1 className="items-center text-lg sm:text-xl font-semibold py-1.5 sm:pb-5">Orders List</h1>
-          <OrderNavbar activeTab={activeTab} onTabChange={setActiveTab} />
+          <OrderNavbar activeTab={activeTab} onTabChange={setActiveTab} orders={orders}/>
           <div className="max-h-[72vh] overflow-y-auto mt-4 sm:mt-5 [&::-webkit-scrollbar]:hidden scrollbar-hide">
-            <OrderList orders={filteredOrders} onSelect={setSelectedOrder} onStatusChange={handleStatusChange} onDelete={handleDeleteOrder}
+            <OrderList orders={filteredOrders} fullOrders={orders} onSelect={setSelectedOrder} onStatusChange={handleStatusChange} onDelete={handleDeleteOrder}
             />
           </div>
         </div>
 
         {/* Order Details */}
-        <div className="xl:col-span-7 bg-white rounded-xl shadow font-bold border border-gray-200 p-4 sm:p-6">
-          <OrderDetails order={selectedOrder} onStatusChange={handleStatusChange} onDelete={handleDeleteOrder}/>
+        <div className="xl:col-span-6 bg-white rounded-xl shadow font-bold border border-gray-200 p-4 sm:p-6">
+          <OrderDetails order={selectedOrder} onStatusChange={handleStatusChange} onDelete={handleDeleteOrder} />
         </div>
       </div>
     </div>

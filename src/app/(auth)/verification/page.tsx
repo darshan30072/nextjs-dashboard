@@ -1,13 +1,15 @@
 "use client";
 
+import axiosInstance from "@/utils/services/axiosInstance";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
 
 export default function Verification() {
   const router = useRouter();
   const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
-  const [code, setCode] = useState(["", "", "", ""]);
+  const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [timer, setTimer] = useState(60);
   const [resendDisabled, setResendDisabled] = useState(true);
   const [email, setEmail] = useState<string | null>(null);
@@ -19,7 +21,7 @@ export default function Verification() {
     if (storedEmail) {
       setEmail(storedEmail);
     } else {
-      alert("No email found, please start the reset process again.");
+      toast.error("No email found, please start the reset process again.");
       router.push("/forgot-password");
     }
   }, [router]);
@@ -36,44 +38,75 @@ export default function Verification() {
     }
   }, [timer]);
 
-  // Handle code input and auto-focus next input
+  // Auto-focus first input on mount
+  useEffect(() => {
+    if (inputsRef.current[0]) {
+      inputsRef.current[0].focus();
+    }
+  }, []);
+
+  // Handle change: supports typing + pasting
   const handleChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return; // only digits allowed
+    if (!/^\d*$/.test(value)) return; // digits only
 
     const newCode = [...code];
-    newCode[index] = value;
-    setCode(newCode);
 
-    if (value && inputsRef.current[index + 1]) {
-      inputsRef.current[index + 1]?.focus();
+    if (value.length > 1) {
+      // Handle paste (e.g., user pastes 123456)
+      value.split("").forEach((char, i) => {
+        if (i < 6) {
+          newCode[i] = char;
+          if (inputsRef.current[i]) {
+            inputsRef.current[i]!.value = char;
+          }
+        }
+      });
+      setCode(newCode);
+      inputsRef.current[5]?.focus(); // focus last
+    } else {
+      // Handle normal input
+      newCode[index] = value;
+      setCode(newCode);
+      if (value && inputsRef.current[index + 1]) {
+        inputsRef.current[index + 1]?.focus();
+      }
+    }
+  };
+
+  // Optional: handle backspace to focus previous input
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !code[index] && inputsRef.current[index - 1]) {
+      inputsRef.current[index - 1]?.focus();
     }
   };
 
   // Handle resend OTP
   const handleResend = async () => {
     if (!email) return;
+
     setTimer(60);
     setResendDisabled(true);
+    setLoading(true);
 
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
+      const response = await axiosInstance.post("/v1/send-otp", { email });
+      const data = response.data;
 
-      const res = await fetch(`${baseUrl}/v1/auth/verify-otp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      const data = await res.json();
-
-      if (res.ok) {
-        alert(`Verification code resent to ${email}`);
+      if (data.statusCode === 200) {
+        toast.success(data.message || `Verification code resent to ${email}`);
       } else {
-        alert(data.message || "Failed to resend code");
+        toast.error(data.message || "Failed to resend code.");
       }
     } catch (error) {
-      console.error("Verification APT Error : ", error)
+      console.error("Resend OTP error:", error);
+      toast.error("Something went wrong while resending code.");
+      // Reset resendDisabled so user can try again
+      setResendDisabled(false);
+    } finally {
+      setLoading(false);
     }
   };
+
 
   // Handle OTP verification submit
   const handleSubmit = async (e: React.FormEvent) => {
@@ -81,28 +114,26 @@ export default function Verification() {
     if (!email) return;
 
     const fullCode = code.join("");
-    if (fullCode.length < 4) {
-      alert("Please enter the 4-digit verification code.");
+    if (fullCode.length < 6) {
+      toast.error("Please enter the 6-digit verification code.");
       return;
     }
 
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/verify-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, code: fullCode }),
-      });
+      const response = await axiosInstance.post("/v1/verify-otp", { email, otp: Number(fullCode) });
 
-      const data = await res.json();
+      const data = response.data;
 
-      if (res.ok) {
+      if (data.statusCode === 200) {
         router.push("/new-password");
+        toast.success(data.message);
       } else {
-        alert(data.message || "Invalid verification code. Please try again.");
+        toast.error(data.message || "Invalid verification code.");
       }
     } catch (error) {
       console.error(error);
+      toast.error("Verification failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -113,7 +144,7 @@ export default function Verification() {
       {/* Splash image (hidden on mobile/tablet) */}
       <div className="hidden lg:flex w-full lg:w-1/2 justify-center items-center p-4">
         <Image
-          src={"/Splash-screen2.jpg"}
+          src={"/images/Splash-screen.jpg"}
           alt="Splash Screen"
           width={500}
           height={500}
@@ -149,7 +180,7 @@ export default function Verification() {
             </div>
 
             <div className="flex justify-between gap-2">
-              {[0, 1, 2, 3].map((_, index) => (
+              {[0, 1, 2, 3, 4, 5].map((_, index) => (
                 <input
                   key={index}
                   maxLength={1}
@@ -158,7 +189,8 @@ export default function Verification() {
                   pattern="\d*"
                   value={code[index]}
                   onChange={(e) => handleChange(index, e.target.value)}
-                  className="w-1/4 px-3 py-4 text-center font-bold border-none rounded-xl focus:outline-none text-sm lg:text-base text-gray-700 bg-gray-100"
+                  onKeyDown={(e) => {handleKeyDown(index, e)}}
+                  className="w-1/6 py-3 text-center font-bold border-none rounded-lg focus:outline-none text-gray-700 bg-gray-100"
                   ref={(el) => {
                     inputsRef.current[index] = el;
                   }}

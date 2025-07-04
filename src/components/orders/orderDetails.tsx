@@ -13,7 +13,7 @@ interface Props {
 }
 
 const OrderDetails: React.FC<Props> = ({ order, onStatusChange, onDelete }) => {
-  if (!order) return <p className="text-gray-400">Select an order to view details.</p>;
+  if (!order) return <div className="text-gray-400">Select an order to view details.</div>;
 
   const totalAmount = order.amount;
 
@@ -24,11 +24,14 @@ const OrderDetails: React.FC<Props> = ({ order, onStatusChange, onDelete }) => {
       <div className="bg-white p-4 sm:p-5 border border-gray-300 rounded-xl text-sm">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
           <div>
-            <h1 className="font-semibold">Order No - {order.id}</h1>
-            <div className="text-gray-400 text-sm">{format(new Date(order.date), "MMM dd, yyyy - hh:mm a")}</div>
+            <div className="flex gap-1 font-semibold">
+              Order No -
+              <div>{order.order_no.slice(-5)}</div>
+            </div>
+            <div className="text-gray-400 text-sm">{format(new Date(order.date), "MMM dd, yyyy | hh:mm a")}</div>
           </div>
           <div className='text-right'>
-            <div className="font-semibold">{order.user.name}</div>
+            <div className="font-semibold">{order.userId}{order.user.name}</div>
             <div className="text-gray-400 text-sm">User since {order.user.since}</div>
           </div>
         </div>
@@ -63,24 +66,17 @@ const OrderDetails: React.FC<Props> = ({ order, onStatusChange, onDelete }) => {
                   }).format(item.order_item_price)}
                 </div>
               </div>
-              <div className="flex justify-between mt-3">
-                <div className='flex gap-1'>
-                  <div>
-                    GST : 
-                  </div>
-                  <div>
-                    {/* {item.item_icon || "🍕"}
-                    {item.item_name || "3x Large Margherita Pizza"} */}
-                  </div>
+              {/* <div className="gap-1 justify-between mt-3"> */}
+                <div className="flex justify-between text-gray-500 mt-3">
+                  <p>Discount</p>
+                  <p className="text-green-500">-${order.discount.toFixed(2)}</p>
                 </div>
-                <div className='text-orange-500 font-semibold'>
-                  {/* {new Intl.NumberFormat("en-US", {
-                    style: "currency",
-                    currency: "USD",
-                  }).format */}
-                  {(order.tax)} % 
+
+                <div className="flex justify-between text-gray-500 mt-3">
+                  <p>GST</p>
+                  <p>{order.tax}%</p>
                 </div>
-              </div>
+              {/* </div> */}
             </div>
           ))}
           <div className="flex justify-between font-bold border-t border-gray-300 pt-2">

@@ -1,10 +1,11 @@
 "use client";
 
+import axiosInstance from "@/utils/services/axiosInstance";
 import axios from "axios";
 
 export const getFoodItemById = async (id: number) => {
   try {
-    const response = await axios.get(`/v1/restaurant/item/${id}`);
+    const response = await axiosInstance.get(`/v1/restaurant/item/${id}`);
 
     return response.data;
   } catch (error) {

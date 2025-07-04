@@ -13,11 +13,12 @@ export interface OrderItem {
 
 // Represents a full order
 export interface Order {
-  id: number;                      // Order ID
+  id: number;   
+  order_no: string;                // Order ID
   userId: number;                  // User ID who placed the order
   date: string;                    // ISO date string when order was placed
   amount: number;                  // Total item amount
-  discount: number | null;         // Discount amount
+  discount: number;         // Discount amount
   tax: number;                     // Tax value
   netPrice: number;                // Final price after tax and discount
   address: string;                 // Delivery address (frontend dummy if not provided by backend)

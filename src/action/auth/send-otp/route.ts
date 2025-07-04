@@ -1,16 +1,12 @@
-// /app/api/send-otp/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import axios from "axios";
+import axiosInstance from "@/utils/services/axiosInstance";
 
 export async function POST(req: NextRequest) {
   try {
     const { email } = await req.json();
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
-
-    const response = await axios.post(
-      `${baseUrl}/v1/send-otp`,
-      { email },
+    const response = await axiosInstance.post("/v1/send-otp", { email },
       {
         headers: {
           "Content-Type": "application/json",

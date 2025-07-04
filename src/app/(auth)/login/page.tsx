@@ -6,6 +6,7 @@ import Image from "next/image";
 import { BiHide, BiShowAlt } from "react-icons/bi";
 import setCookie from "@/constant/cookie";
 import toast from "react-hot-toast";
+import axiosInstance from "@/utils/services/axiosInstance";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -25,22 +26,16 @@ export default function LoginPage() {
       return;
     }
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
-
-      const res = await fetch(`${baseUrl}/v1/restaurant/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
+      const response = await axiosInstance.post("/v1/restaurant/login", {
+        email,
+        password,
       });
-      const data = await res.json();
 
-      if (res.ok && data?.data?.token) {
+      const data = response.data;
+
+      if (data?.data?.token) {
         setCookie("token", data.data.token, rememberMe ? 24 * 7 : 24);
-        // toast.success("Login Successful!");
-        location.pathname = "/dashboard"
+        location.pathname = "/dashboard";
       } else {
         toast.error("Login Failed!");
       }
@@ -82,7 +77,7 @@ export default function LoginPage() {
       {/* Left: Image (hidden on small screens) */}
       <div className="hidden lg:flex w-full lg:w-1/2 justify-center items-center p-4">
         <Image
-          src="/Splash-screen2.jpg"
+          src="/images/Splash-screen.jpg"
           alt="Splash Screen"
           width={500}
           height={500}
@@ -111,7 +106,7 @@ export default function LoginPage() {
                   setEmailError("");
                 }}
               />
-              {emailError && <span className="text-red-500 text-xs font-medium mt-1">{emailError}</span>}
+              {emailError && <span className="text-red-500 text-xs font-semibold mt-1">{emailError}</span>}
 
             </div>
             <div className="relative">
@@ -126,7 +121,7 @@ export default function LoginPage() {
                   setPasswordError("");
                 }}
               />
-              {passwordError && <span className="text-red-500 text-xs font-medium mt-1">{passwordError}</span>}
+              {passwordError && <span className="text-red-500 text-xs font-semibold mt-1">{passwordError}</span>}
               <button
                 type="button"
                 className="absolute right-5 top-11 text-md text-blue-600 hover:text-blue-800 font-semibold select-none"

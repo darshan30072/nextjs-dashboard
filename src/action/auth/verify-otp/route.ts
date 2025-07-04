@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import axios from "axios";
+import axiosInstance from "@/utils/services/axiosInstance";
 
 export async function POST(req: NextRequest) {
   try {
     const { otp, email } = await req.json();
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
-
-    const response = await axios.post(
-      `${baseUrl}/v1/auth/verify-otp`,
-      { otp, email },
+    const response = await axiosInstance.post("/v1/verify-otp", { otp, email },
       {
         headers: {
           "Content-Type": "application/json",

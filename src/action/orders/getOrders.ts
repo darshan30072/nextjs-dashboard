@@ -9,11 +9,14 @@ export async function getOrders() {
 
     const data = response.data;
 
-    if (!Array.isArray(data.data)) {
-      throw new Error("Invalid response format");
+    if (
+      !data?.data?.data?.orders || 
+      !Array.isArray(data.data.data.orders)
+    ) {
+      throw new Error("invalid Response format.");
     }
 
-    return data.data;
+    return data.data.data.orders;
   } catch (error) {
     console.error("Error fetching orders:", error);
     if (axios.isAxiosError(error) && error.response?.data?.message) {

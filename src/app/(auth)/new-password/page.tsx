@@ -1,8 +1,10 @@
 "use client";
 
+import axiosInstance from "@/utils/services/axiosInstance";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { BiHide, BiShowAlt } from "react-icons/bi";
 
 export default function NewPasswordPage() {
@@ -53,24 +55,20 @@ export default function NewPasswordPage() {
     setLoading(true);
 
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL; // Access from .env
-
-      const res = await fetch(`${baseUrl}/v1/auth/reset-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+      const response = await axiosInstance.post("/v1/reset-password", {
+        email,
+        newPassword: password
       });
 
-      const data = await res.json();
+      const data = response.data;
 
-      if (res.ok) {
-        alert("Password changed successfully. Please log in.");
+      if (data.status === 200) {
+        toast.success(data.message || "Password changed successfully");
         router.push("/login");
-      } else {
-        setError(data.message || "Failed to reset password.");
-      }
-    } catch {
-      setError("Something went wrong. Please try again.");
+      } 
+    } catch (error) {
+      console.error("Reset password error:", error);
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -81,7 +79,7 @@ export default function NewPasswordPage() {
       {/* Left: Image */}
       <div className="hidden lg:flex w-full lg:w-1/2 justify-center items-center p-4">
         <Image
-          src="/Splash-screen2.jpg"
+          src="/images/Splash-screen.jpg"
           alt="Splash Screen"
           width={500}
           height={500}
