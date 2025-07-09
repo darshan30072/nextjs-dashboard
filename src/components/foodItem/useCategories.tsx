@@ -1,26 +1,19 @@
-import { getCategory } from "@/action/category/getCategory";
-import { Category } from "@/interface/categoryTypes";
-import { useEffect, useState } from "react";
+import useCategoriesVM from "@/viewmodels/ComponentViewModel/foodItem/useCategoriesViewModel";
 
+export default function CategoryList() {
+  const { categories, loading, error, fetchCategories } = useCategoriesVM();
 
-export default function useCategories() {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
+  if (loading) return <p>Loading categories...</p>;
+  if (error) return <p>Error: {error}</p>;
 
-  const fetchCategory = async () => {
-    try {
-      const data = await getCategory();
-      setCategories(data.categories);
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchCategory();
-  }, []);
-
-  return { categories, loading };
+  return (
+    <div>
+      <button onClick={fetchCategories}>Refresh Categories</button>
+      <ul>
+        {categories.map((cat) => (
+          <li key={cat.id}>{cat.title}</li>
+        ))}
+      </ul>
+    </div>
+  );
 }

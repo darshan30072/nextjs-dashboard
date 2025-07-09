@@ -1,28 +1,21 @@
-"use client";
+'use client';
 
-import { Order } from "@/interface/orderTypes";
-import { format, isSameDay, parseISO } from "date-fns";
-import React, { useState } from "react";
+import React from "react";
+import { format } from "date-fns";
 import OrderActionButtons from "./orderActionButtons";
 import { MdOutlineClear } from "react-icons/md";
+import { OrderListProps } from "@/models/ordersModel";
+import { useOrderListVM } from "@/viewmodels/ComponentViewModel/orders/orderListViewModel";
+// import { VscClearAll } from "react-icons/vsc";
 
-interface Props {
-  orders: Order[];
-  fullOrders: Order[];
-  onSelect: (order: Order) => void;
-  onStatusChange: (id: number, newStatus: Order['status']) => void;
-  onDelete: (id: number) => void;
-}
-
-const OrderList: React.FC<Props> = ({ orders, fullOrders, onSelect, onStatusChange, onDelete }) => {
-  const [filterDate, setFilterDate] = useState<string | null>(null);
-
-  const activeOrdersCount = fullOrders.filter(order => order.status !== 'completed').length;
-
-  // ✅ Apply date filter if set
-  const filteredOrders = filterDate
-    ? orders.filter(order => isSameDay(parseISO(order.date), parseISO(filterDate)))
-    : orders;
+const OrderList: React.FC<OrderListProps> = ({ orders, onSelect, onStatusChange, onDelete }) => {
+  const {
+    filterDate,
+    handleDateChange,
+    clearFilter,
+    filteredOrders,
+    activeOrdersCount,
+  } = useOrderListVM(orders);
 
   return (
     <div className="text-md space-y-4 mb-5">
@@ -34,15 +27,15 @@ const OrderList: React.FC<Props> = ({ orders, fullOrders, onSelect, onStatusChan
           <input
             type="date"
             value={filterDate || ''}
-            onChange={(e) => setFilterDate(e.target.value || null)}
+            onChange={(e) => handleDateChange(e.target.value)}
             className="border border-gray-300 rounded-lg px-2 py-1 text-sm"
           />
           <button
-            onClick={() => setFilterDate(null)}
-            className={`text-xs underline ${filterDate ? 'text-blue-500 cursor-pointer' : 'text-gray-300 cursor-not-allowed'
-              }`}
+            onClick={clearFilter}
+            className={`underline ${filterDate ? 'text-xl font-black text-red-500 cursor-pointer' : 'text-gray-300 cursor-not-allowed'}`}
           >
-            <MdOutlineClear className="text-lg" />
+            {/* <VscClearAll/> */}
+            <MdOutlineClear/>
           </button>
         </div>
       </div>
@@ -54,8 +47,7 @@ const OrderList: React.FC<Props> = ({ orders, fullOrders, onSelect, onStatusChan
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
             <div className="flex gap-1 font-semibold">
-              Order No -
-              <div>{order.order_no.slice(-5)}</div>
+              Order No - <div>{order.order_no.slice(-5)}</div>
             </div>
             <div className="text-gray-400 font-semibold sm:text-end">
               {format(new Date(order.date), "hh:mm a")}
@@ -81,7 +73,11 @@ const OrderList: React.FC<Props> = ({ orders, fullOrders, onSelect, onStatusChan
               </button>
             </div>
             <div className="flex justify-start sm:justify-end items-center gap-2 text-sm">
-              <OrderActionButtons order={order} onStatusChange={onStatusChange} onDelete={onDelete} />
+              <OrderActionButtons
+                order={order}
+                onStatusChange={onStatusChange}
+                onDelete={onDelete}
+              />
             </div>
           </div>
         </div>

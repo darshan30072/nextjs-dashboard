@@ -1,321 +1,50 @@
 'use client';
 
-import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { FoodCategory } from "@/interface/foodTypes";
 import Image from "next/image";
 import { IoMdAddCircle } from "react-icons/io";
-import useCategories from "@/components/foodItem/useCategories";
 import Loader from "@/components/loader";
-import toast from "react-hot-toast";
-import { getFoodItemById } from "@/action/foodItem/getFoodItemById";
-import { updateFoodItem } from "@/action/foodItem/updateFoodItem";
-
-type PortionPrice = {
-  portion: string;
-  price: string;
-};
-
-type ExistingAttachment = {
-  url: string;
-  type: 'image' | 'video';
-};
+import { useCategoriesVM } from "@/viewmodels/MainScreenViewModel/categories/CategoriesViewModal";
+import { useEditFoodItemVM } from "@/viewmodels/MainScreenViewModel/foodItem/edit/editFoodItemViewModel";
 
 export default function EditFoodItem() {
   const router = useRouter();
   const params = useParams();
   const id = Number(params.id);
-  const { categories: dynamicCats, loading: catsLoading } = useCategories();
+  const { categories: dynamicCats, loading: catsLoading } = useCategoriesVM();
 
-  const [ingredientInput, setIngredientInput] = useState("");
-  const [newPortion, setNewPortion] = useState<PortionPrice>({ portion: "", price: "" });
-  const [loading, setLoading] = useState(true);
+  const {
+    loading,
+    formData,
+    formErrors,
+    handleChange,
+    ingredientInput,
+    setIngredientInput,
+    handleAddIngredient,
+    handleRemoveIngredient,
+    newPortion,
+    setNewPortion,
+    handlePortionChange,
+    addPortion,
+    removePortion,
+    selectedFiles,
+    existingAttachments,
+    handleDrop,
+    handleRemoveFile,
+    handleRemoveExisting,
+    toggleAvailable,
+    resetForm,
+    handleSubmit,
+  } = useEditFoodItemVM(id);
 
-  // For new uploads (in order)
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  // For existing attachments (from DB)
-  const [existingAttachments, setExistingAttachments] = useState<ExistingAttachment[]>([]);
-
-  const [initialFormData, setInitialFormData] = useState<typeof formData | null>(null);
-  const [initialAttachments, setInitialAttachments] = useState<ExistingAttachment[]>([]);
-
-  const isEqual = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
-
-  const [formErrors, setFormErrors] = useState({
-    name: "",
-    category: "",
-    details: "",
-    ingredients: "",
-    portions: "",
-    preparationTime: "",
-  });
-
-  const validateForm = () => {
-    const errors: typeof formErrors = {
-      name: "",
-      category: "",
-      details: "",
-      ingredients: "",
-      portions: "",
-      preparationTime: "",
-    };
-
-    if (!formData.name.trim()) errors.name = "Item name is required";
-    if (!formData.category) errors.category = "Category is required";
-    if (!formData.details) errors.details = " Descripions is required";
-    if (!formData.preparationTime) errors.preparationTime = "Preparation time is required";
-
-    if (formData.ingredients.length === 0) {
-      errors.ingredients = "At least one ingredient is required";
-    }
-
-    const validPortions = formData.portionPrices.filter(p => p.portion && p.price);
-    if (validPortions.length === 0) {
-      errors.portions = "At least one portion with price is required";
-    }
-
-    setFormErrors(errors);
-
-    // Return true if no errors
-    return Object.values(errors).every(err => err === "");
-  };
-
-  const [formData, setFormData] = useState({
-    name: "",
-    category: "" as FoodCategory,
-    details: "",
-    ingredients: [] as string[],
-    portionPrices: [{ portion: "", price: "" }],
-    preparationTime: "",
-    available: false,
-  });
-
-  const resetForm = () => {
-    const confirmed = window.confirm("Are you sure you want to reset the form?");
-    if (!confirmed) return;
-    setFormData({
-      name: "",
-      category: "" as FoodCategory,
-      details: "",
-      ingredients: [],
-      portionPrices: [],
-      preparationTime: "",
-      available: false,
-    });
-    setIngredientInput("");
-    setNewPortion({ portion: "", price: "" });
-    setFormErrors({
-      name: "",
-      category: "",
-      details: "",
-      ingredients: "",
-      portions: "",
-      preparationTime: "",
-    });
-  };
-
-  useEffect(() => {
-    const fetchFoodItem = async () => {
-      setLoading(true);
-      try {
-        const data = await getFoodItemById(id);
-        const preparedFormData = {
-          name: data.item_title || "",
-          category: data.category_id_int?.toString() || "",
-          details: data.item_description || "",
-          ingredients: Array.isArray(data.item_ingredient)
-            ? data.item_ingredient
-            : (typeof data.item_ingredient === "string" && data.item_ingredient.trim().startsWith("["))
-              ? JSON.parse(data.item_ingredient)
-              : data.item_ingredient?.split(',').map((i: string) => i.trim()) ?? [],
-          portionPrices: Array.isArray(data.portions)
-            ? data.portions.map((p: { portion_title: string; portion_price: string; }) => ({
-              portion: p.portion_title || "",
-              price: String(p.portion_price || ""),
-            }))
-            : [],
-          preparationTime: data.item_prepartion_time_min != null ? String(data.item_prepartion_time_min) : "",
-          available: data.is_item_available_for_order === 1,
-        };
-
-        setFormData(preparedFormData);
-        setInitialFormData(preparedFormData);
-
-        const attachments: ExistingAttachment[] = (data.attachments || []).map((att: { file_logical_name: string; }) => {
-          const url = `https://food-admin.wappzo.com/uploads/items/${att.file_logical_name}`;
-          if (/\.(mp4|webm|ogg|mov)$/i.test(att.file_logical_name)) {
-            return { url, type: 'video' };
-          }
-          return { url, type: 'image' };
-        });
-        setExistingAttachments(attachments);
-        setInitialAttachments(attachments);
-      } catch (err) {
-        toast.error("Failed to fetch food item.");
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFoodItem();
-  }, [id]);
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const target = e.target;
-    const { name, type } = target;
-
-    // Clear the specific field's error
-    setFormErrors(prev => {
-      const updated = { ...prev };
-      return updated;
-    });
-
-    if (target instanceof HTMLInputElement && type === "checkbox") {
-      setFormData(prev => ({ ...prev, [name]: target.checked }));
-    } else if (target instanceof HTMLInputElement && type === "file" && target.files) {
-      const files = Array.from(target.files);
-      setSelectedFiles(prev => [...prev, ...files]);
-    } else {
-      setFormData(prev => ({ ...prev, [name]: target.value }));
-    }
-  };
-
-  const handleAddIngredient = () => {
-    if (ingredientInput.trim()) {
-      const newIngredients = ingredientInput
-        .split(", ")
-        .map(i => i.trim())
-        .filter(i => i.length > 0)
-      setFormData(prev => ({
-        ...prev,
-        ingredients: [...prev.ingredients, ...newIngredients],
-      }));
-      setIngredientInput("");
-    }
-  };
-
-  const handleRemoveIngredient = (ingredient: string) => {
-    setFormData(prev => ({
-      ...prev,
-      ingredients: prev.ingredients.filter(item => item !== ingredient),
-    }));
-  };
-
-  const handlePortionChange = (index: number, field: "portion" | "price", value: string) => {
-    const updated = [...formData.portionPrices];
-    updated[index][field] = value;
-    setFormData(prev => ({ ...prev, portionPrices: updated }));
-  };
-
-  const addPortion = (portionObj?: { portion: string; price: string }) => {
-    setFormData(prev => {
-      const cleanedPortions = prev.portionPrices.filter(
-        (p) => p.portion.trim() !== "" && p.price.trim() !== ""
-      );
-      return {
-        ...prev,
-        portionPrices: [...cleanedPortions, portionObj || { portion: "", price: "" }],
-      };
-    });
-  };
-
-  const removePortion = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      portionPrices: prev.portionPrices.filter((_, i) => i !== index),
-    }));
-  };
-
-  // Drag & drop support
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const files = Array.from(e.dataTransfer.files);
-    setSelectedFiles(prev => [...prev, ...files]);
-  };
-
-  // Remove a new file by index
-  const handleRemoveFile = (index: number) => {
-    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
-  };
-
-  // Remove an existing attachment by index
-  const handleRemoveExisting = (index: number) => {
-    setExistingAttachments(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const isValid = validateForm();
-    if (!isValid) {
-      toast.error("Please fill in all required fields.");
-      return;
-    }
-
-    // Check if form data and attachments match initial
-    const currentAttachments = existingAttachments;
-    const initialAttachmentsNames = initialAttachments.map(a => a.url.split("/").pop());
-    const currentAttachmentsNames = currentAttachments.map(a => a.url.split("/").pop());
-
-    const isSameFormData = isEqual(formData, initialFormData);
-    const isSameAttachments = isEqual(currentAttachmentsNames, initialAttachmentsNames);
-    const isSameFiles = selectedFiles.length === 0;
-
-    if (isSameFormData && isSameAttachments && isSameFiles) {
-      // toast("No changes detected. Nothing to update.");
+    const success = await handleSubmit(id);
+    if (success) {
       router.push("/foodItem");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const formPayload = new FormData();
-
-      formPayload.append("item_title", formData.name);
-      formPayload.append("category_id_int", String(Number(formData.category)));
-      formPayload.append("item_description", formData.details);
-      formPayload.append("item_prepartion_time_min", String(Number(formData.preparationTime)));
-      formPayload.append("is_item_available_for_order", String(formData.available));
-      formPayload.append("item_ingredient", JSON.stringify(formData.ingredients));
-
-      const filteredPortions = formData.portionPrices.filter(
-        (p) => p.portion.trim() !== "" && p.price.trim() !== ""
-      );
-      formPayload.append("portions", JSON.stringify(filteredPortions.map(p => ({
-        portion_title: p.portion,
-        portion_price: Number(p.price),
-      }))));
-
-      // 🔑 Always send what you want to keep
-      formPayload.append(
-        "existing_attachments",
-        JSON.stringify(
-          existingAttachments.map(a => {
-            const parts = a.url.split("/");
-            return parts[parts.length - 1];
-          })
-        )
-      );
-      // Add new files in order
-      selectedFiles.forEach(file => {
-        formPayload.append("files", file);
-      });
-
-
-      await updateFoodItem(id, formPayload);
-      toast.success("Food Item Updated Successfully!");
-      router.push("/foodItem");
-    } catch (err) {
-      toast.error("Food Item Update Failed!");
-      console.error(err);
-    } finally {
-      setLoading(false);
     }
   };
+
   return (
     <div>
       {/* Page Content */}
@@ -325,7 +54,7 @@ export default function EditFoodItem() {
             {loading ? (
               <Loader message="Fetching item data..." />
             ) : (
-              <form onSubmit={handleSubmit}>
+              <form onSubmit={onSubmit}>
                 <div className="flex justify-between items-center mt-1 mb-5">
                   <h2 className="text-xl font-semibold">Edit Food Item</h2>
                   <button type="button"
@@ -343,12 +72,12 @@ export default function EditFoodItem() {
                     name="category"
                     value={formData.category}
                     onChange={handleChange}
-                    className="w-full border mt-1 p-2 rounded"
+                    className={`w-full border mt-1 p-2 rounded ${formErrors.category ? "border-red-500" : "border-gray-500"}`}
                     disabled={catsLoading}
                   >
                     <option value="">Select</option>
                     {dynamicCats.length > 0 &&
-                      [...dynamicCats].reverse().map(cat => (
+                      [...dynamicCats].map(cat => (
                         <option key={cat.id_int} value={cat.id_int.toString()} className="mt-1">
                           {cat.title}
                         </option>
@@ -370,15 +99,14 @@ export default function EditFoodItem() {
                     placeholder="Item name"
                     value={formData.name}
                     onChange={handleChange}
-                    required
-                    className="w-full border mt-1 p-2 rounded"
+                    className={`w-full border mt-1 p-2 rounded ${formErrors.name ? "border-red-500" : "border-gray-500"}`}
                   />
                   {formErrors.name && (
                     <p className="text-red-500 text-sm mt-1 font-semibold">{formErrors.name}</p>
                   )}
                 </div>
 
-                <div className="max-h-24 mt-4">
+                <div className="mt-4">
                   <label className="font-semibold">
                     DESCRIPTION <span className="text-red-500 animate-pulse text-lg" aria-hidden="true">*</span>
                   </label>
@@ -388,10 +116,10 @@ export default function EditFoodItem() {
                     value={formData.details}
                     onChange={handleChange}
                     rows={2}
-                    className="w-full border mt-1 p-2 rounded"
+                    className={`w-full border mt-1 p-2 rounded ${formErrors.details ? "border-red-500" : "border-gray-500"}`}
                   />
                   {formErrors.details && (
-                    <p className="text-red-500 text-sm mt-1 font-semibold">{formErrors.details}</p>
+                    <p className="text-red-500 text-sm font-semibold">{formErrors.details}</p>
                   )}
                 </div>
 
@@ -419,7 +147,10 @@ export default function EditFoodItem() {
                       placeholder="Item ingredient"
                       value={ingredientInput}
                       onChange={(e) => setIngredientInput(e.target.value)}
-                      className="border p-2 rounded-l w-full"
+                      className={`w-full border border-r-0 p-2 rounded rounded-r-none ${formErrors.ingredients && formData.ingredients.length === 0
+                        ? "border-red-500"
+                        : "border-gray-500"
+                        }`}
                     />
                     <button
                       type="button"
@@ -429,7 +160,7 @@ export default function EditFoodItem() {
                       ADD
                     </button>
                   </div>
-                  {formErrors.ingredients && (
+                  {formErrors.ingredients && formData.ingredients.length === 0 && (
                     <p className="text-red-500 text-sm mt-1 font-semibold">{formErrors.ingredients}</p>
                   )}
                 </div>
@@ -488,7 +219,10 @@ export default function EditFoodItem() {
                         placeholder="Item portion"
                         value={newPortion.portion}
                         onChange={e => setNewPortion({ ...newPortion, portion: e.target.value })}
-                        className="w-full border p-2 rounded mt-1"
+                        className={`w-full border p-2 rounded mt-1 ${formErrors.portions && formData.portionPrices.filter(p => p.portion.trim() && p.price.trim()).length === 0
+                            ? "border-red-500"
+                            : "border-gray-500"
+                          }`}
                       />
                     </div>
                     <div className="w-full md:w-1/2">
@@ -498,7 +232,10 @@ export default function EditFoodItem() {
                         placeholder="Item price"
                         value={newPortion.price}
                         onChange={e => setNewPortion({ ...newPortion, price: e.target.value })}
-                        className="w-full border p-2 rounded mt-1"
+                        className={`w-full border p-2 rounded mt-1 ${formErrors.portions && formData.portionPrices.filter(p => p.portion.trim() && p.price.trim()).length === 0
+                            ? "border-red-500"
+                            : "border-gray-500"
+                          }`}
                       />
                     </div>
                     <div className="mt-2">
@@ -517,7 +254,7 @@ export default function EditFoodItem() {
                       </button>
                     </div>
                   </div>
-                  {formErrors.portions && (
+                  {formErrors.portions && formData.portionPrices.length === 0 && (
                     <p className="text-red-500 text-sm mt-1 font-semibold">{formErrors.portions}</p>
                   )}
                 </div>
@@ -618,7 +355,7 @@ export default function EditFoodItem() {
                     max="30"
                     value={formData.preparationTime}
                     onChange={handleChange}
-                    className="w-full border mt-1 p-2 rounded"
+                    className={`w-full border mt-1 p-2 rounded ${formErrors.preparationTime ? "border-red-500" : "border-gray-500"}`}
                   />
                   {formErrors.preparationTime && (
                     <p className="text-red-500 text-sm mt-1 font-semibold">{formErrors.preparationTime}</p>
@@ -632,9 +369,7 @@ export default function EditFoodItem() {
                     role="switch"
                     name="available"
                     aria-checked={formData.available}
-                    onClick={() =>
-                      setFormData(prev => ({ ...prev, available: !prev.available }))
-                    }
+                    onClick={toggleAvailable}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 ${formData.available ? 'bg-green-500' : 'bg-gray-300'}`}
                   >
                     <span
@@ -653,7 +388,7 @@ export default function EditFoodItem() {
                   </button>
                   <button
                     type="submit"
-                    onClick={handleSubmit}
+                    // onClick={onSubmit}
                     className="w-full sm:w-auto px-6 py-2 bg-orange-500 text-white rounded hover:bg-orange-600"
                   >
                     Update Item

@@ -1,80 +1,22 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { BiHide, BiShowAlt } from "react-icons/bi";
-import setCookie from "@/constant/cookie";
-import toast from "react-hot-toast";
-import axiosInstance from "@/utils/services/axiosInstance";
+import { useLoginVM } from "@/viewmodels/MainScreenViewModel/auth/LoginViewModal";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
-  const [emailError, setEmailError] = useState("");
-  const [passwordError, setPasswordError] = useState("");
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validateForm()) return;
-
-    if (email !== "admin@gmail.com" || password !== "admin@123") {
-      toast.error("Access Denied: Only Admin can log in.")
-      return;
-    }
-    try {
-      const response = await axiosInstance.post("/v1/restaurant/login", {
-        email,
-        password,
-      });
-
-      const data = response.data;
-
-      if (data?.data?.token) {
-        setCookie("token", data.data.token, rememberMe ? 24 * 7 : 24);
-        location.pathname = "/dashboard";
-      } else {
-        toast.error("Login Failed!");
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("Login Failed...!");
-    }
-  };
-
-  const validateForm = () => {
-    let isValid = true;
-
-    if (!email) {
-      setEmailError("Email is required");
-      isValid = false;
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      setEmailError("Invalid email format");
-      isValid = false;
-    } else {
-      setEmailError("");
-    }
-
-    if (!password) {
-      setPasswordError("Password is required");
-      isValid = false;
-    } else if (password.length < 6) {
-      setPasswordError("Password must be at least 6 characters");
-      isValid = false;
-    } else {
-      setPasswordError("");
-    }
-
-    return isValid;
-  };
-
+  const {
+    email, setEmail,
+    password, setPassword,
+    showPassword, setShowPassword,
+    rememberMe, setRememberMe,
+    emailError, passwordError,
+    handleLogin
+  } = useLoginVM();
 
   return (
     <div className="flex flex-col lg:flex-row items-center justify-center w-screen h-screen bg-white">
-      {/* Left: Image (hidden on small screens) */}
       <div className="hidden lg:flex w-full lg:w-1/2 justify-center items-center p-4">
         <Image
           src="/images/Splash-screen.jpg"
@@ -86,14 +28,13 @@ export default function LoginPage() {
         />
       </div>
 
-      {/* Right: Login Form */}
       <div className="w-full lg:w-1/2 flex justify-center items-center bg-gradient-to-tr from-blue-900 to-blue-950 p-6 h-screen">
         <div className="w-full max-w-md bg-white p-6 lg:p-8 rounded-2xl shadow-lg">
           <div className="text-center text-blue-900 mb-6">
             <h1 className="text-xl lg:text-3xl font-bold">Log In</h1>
             <p className="text-xs lg:text-sm text-gray-600 font-medium">Please sign in to your existing account</p>
           </div>
-          <form className="space-y-4">
+          <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
             <div>
               <label className="text-xs lg:text-sm text-gray-700 font-medium">EMAIL</label>
               <input
@@ -101,13 +42,9 @@ export default function LoginPage() {
                 placeholder="Enter Email"
                 className="w-full px-4 py-3 mt-1 rounded-xl bg-gray-100 text-gray-700 focus:outline-none text-sm lg:text-base"
                 value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setEmailError("");
-                }}
+                onChange={(e) => setEmail(e.target.value)}
               />
               {emailError && <span className="text-red-500 text-xs font-semibold mt-1">{emailError}</span>}
-
             </div>
             <div className="relative">
               <label className="text-xs lg:text-sm text-gray-700 font-medium">PASSWORD</label>
@@ -116,10 +53,7 @@ export default function LoginPage() {
                 placeholder="Enter Password"
                 className="w-full px-4 py-3 mt-1 rounded-xl bg-gray-100 text-gray-700 focus:outline-none pr-12 text-sm lg:text-base"
                 value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setPasswordError("");
-                }}
+                onChange={(e) => setPassword(e.target.value)}
               />
               {passwordError && <span className="text-red-500 text-xs font-semibold mt-1">{passwordError}</span>}
               <button
@@ -150,9 +84,8 @@ export default function LoginPage() {
               </div>
             </div>
             <button
-              type="button"
+              type="submit"
               className="w-full bg-orange-500 text-white font-semibold py-3 rounded-xl hover:bg-orange-400 transition text-sm lg:text-base"
-              onClick={handleLogin}
             >
               Login
             </button>

@@ -1,17 +1,9 @@
 'use client';
 
-import { usePathname } from "next/navigation";
-
-const navMap: Record<string, string> = {
-  '/dashboard': 'Dashboard',
-  '/orders': 'Orders',
-  '/categories': 'Food Categories',
-  '/foodItem': 'Food Items',
-};
+import { useClientHeaderVM } from "@/viewmodels/ComponentViewModel/ClientHeaderViewModel";
 
 export default function ClientHeader() {
-    const pathname = usePathname();
-    const title = navMap[pathname] || '';
+    const { title } = useClientHeaderVM();
     return (
         <header className="text-xl font-semibold text-center">
             {title}

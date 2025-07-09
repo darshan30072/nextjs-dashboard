@@ -1,4 +1,3 @@
-// utils/toastConfig.ts
 import { ToasterProps } from "react-hot-toast";
 
 export const toastOptions: ToasterProps["toastOptions"] = {

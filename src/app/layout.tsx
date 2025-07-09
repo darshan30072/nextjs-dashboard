@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Sen } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
-import { toastOptions } from "@/interface/toastConfig";
+import { toastOptions } from "@/models/toastConfigModel";
 
 const sen = Sen({
   variable: "--font-sen",
