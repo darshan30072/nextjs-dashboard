@@ -19,6 +19,22 @@ export type RawFoodItem = {
   }[];
 };
 
+type PortionPrice = { portion: string; price: string };
+
+export type FormData = {
+  name: string;
+  category: FoodCategory;
+  details: string;
+  ingredients: string[];
+  portionPrices: PortionPrice[];
+  preparationTime: string;
+  available: boolean;
+  images: File[];
+  videos: File[];
+  imagePreviews: string[];
+  videoPreviews: string[];
+};
+
 export interface FoodItem {
   id: number;
   name: string;

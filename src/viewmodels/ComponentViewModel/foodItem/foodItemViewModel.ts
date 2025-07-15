@@ -10,11 +10,20 @@ import { getCategory } from "@/services/categoriesService";
 export function useFoodItemVM() {
     const [foodList, setFoodList] = useState<FoodItem[]>([]);
     const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
+
     const [isLoading, setIsLoading] = useState(true);
+
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [searchTerm, setSearchTerm] = useState("");
+
     const router = useRouter();
+
+    const [confirmToggleId, setConfirmToggleId] = useState<number | null>(null);
+    const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+    const [toggleStatus, setToggleStatus] = useState<boolean>(false);
+    const [toggleTitle, setToggleTitle] = useState<string>("");
+    const [deleteTitle, setDeleteTitle] = useState<string>("");
 
     const itemsPerPage = 6;
 
@@ -85,30 +94,69 @@ export function useFoodItemVM() {
         fetchData();
     }, [fetchData]);
 
-    const handleDelete = async (id: number) => {
-        if (!confirm("Are you sure you want to delete this item?")) return;
+    // const handleDelete = async (id: number) => {
+    //     if (!confirm("Are you sure you want to delete this item?")) return;
+    //     try {
+    //         await deleteFoodItem(id);
+    //         toast.success("Item deleted successfully");
+    //         fetchData();
+    //     } catch (err) {
+    //         console.error(err);
+    //         toast.error("Failed to delete item");
+    //     }
+    // };
+
+    // const handleToggle = async (id: number) => {
+    //     const foodItem = foodList.find((item) => item.id === id);
+    //     if (!foodItem) return;
+
+    //     const newAvailability = !foodItem.available;
+    //     try {
+    //         await updateAvailability(id, newAvailability);
+    //         toast.success(`Food Item marked as ${newAvailability ? "Available" : "Unavailable"}`);
+    //         fetchData();
+    //     } catch (err) {
+    //         console.error(err);
+    //         toast.error("Failed to update availability");
+    //     }
+    // };
+
+    const promptToggle = (id: number, title: string, currentStatus: boolean) => {
+        setConfirmToggleId(id);
+        setToggleStatus(currentStatus);
+        setToggleTitle(title);
+    };
+
+    const confirmToggle = async () => {
+        if (confirmToggleId == null) return;
         try {
-            await deleteFoodItem(id);
-            toast.success("Item deleted successfully");
+            await updateAvailability(confirmToggleId, !toggleStatus);
+            toast.success(`Food item marked as ${!toggleStatus ? "Available" : "Unavailable"}`);
             fetchData();
         } catch (err) {
+            toast.error("Failed to update availability");
             console.error(err);
-            toast.error("Failed to delete item");
+        } finally {
+            setConfirmToggleId(null);
         }
     };
 
-    const handleToggle = async (id: number) => {
-        const foodItem = foodList.find((item) => item.id === id);
-        if (!foodItem) return;
+    const promptDelete = (id: number, title: string) => {
+        setConfirmDeleteId(id);
+        setDeleteTitle(title);
+    };
 
-        const newAvailability = !foodItem.available;
+    const confirmDelete = async () => {
+        if (confirmDeleteId == null) return;
         try {
-            await updateAvailability(id, newAvailability);
-            toast.success(`Food Item marked as ${newAvailability ? "Available" : "Unavailable"}`);
+            await deleteFoodItem(confirmDeleteId);
+            toast.success("Item deleted successfully");
             fetchData();
         } catch (err) {
+            toast.error("Failed to delete item");
             console.error(err);
-            toast.error("Failed to update availability");
+        } finally {
+            setConfirmDeleteId(null);
         }
     };
 
@@ -129,8 +177,17 @@ export function useFoodItemVM() {
         totalPages,
         searchTerm,
         setSearchTerm,
-        handleDelete,
-        handleToggle,
+        promptToggle,
+        confirmToggle,
+        confirmToggleId,
+        toggleStatus,
+        toggleTitle,
+        setConfirmToggleId,
+        promptDelete,
+        confirmDelete,
+        confirmDeleteId,
+        setConfirmDeleteId,
+        deleteTitle,
         router,
     };
 }

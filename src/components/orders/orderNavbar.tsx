@@ -8,13 +8,13 @@ const OrderNavbar: React.FC<OrderNavbarProps> = ({ activeTab, onTabChange, order
   const { tabs, getCount } = useOrderNavbarVM(orders);
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-6 gap-1 mb-6 bg-gray-100 p-2 rounded-xl">
+    <div className="flex justify-between gap-1 mb-5 bg-gray-100 p-1 rounded-xl">
       {tabs.map(tab => {
         const count = getCount(tab.value);
         return (
           <button
             key={tab.value}
-            onClick={() => onTabChange(tab.value)} // ✅ Pass tab.value (string)
+            onClick={() => onTabChange(tab.value)}
             className={`px-3 py-2 text-xs lg:text-sm rounded-lg transition-all font-medium ${
               activeTab === tab.value
                 ? 'bg-orange-500 text-white shadow-md'

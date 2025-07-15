@@ -13,6 +13,7 @@ import { useFoodItemVM } from "@/viewmodels/ComponentViewModel/foodItem/foodItem
 import useFoodItemModalVM from "@/viewmodels/ComponentViewModel/foodItem/foodItemModalViewModel";
 import FoodItemModal from "@/components/foodItem/foodItemModal";
 import { useEffect } from "react";
+import { FiSearch } from "react-icons/fi";
 
 const FoodItemList = () => {
   const {
@@ -21,10 +22,19 @@ const FoodItemList = () => {
     currentPage,
     totalPages,
     searchTerm,
+    promptToggle,
+    promptDelete,
     setSearchTerm,
-    handleToggle,
-    handleDelete,
     setCurrentPage,
+    confirmToggle,
+    confirmToggleId,
+    toggleStatus,
+    toggleTitle,
+    setConfirmToggleId,
+    confirmDelete,
+    confirmDeleteId,
+    setConfirmDeleteId,
+    deleteTitle,
   } = useFoodItemVM();
 
   const router = useRouter();
@@ -59,16 +69,19 @@ const FoodItemList = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 sm:p-6">
           <h1 className="text-lg md:text-xl font-semibold">Food Items</h1>
           <div className="flex flex-col sm:flex-row items-center gap-3">
-            <input
-              type="text"
-              placeholder="Search food or category..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="px-3 py-2 rounded border font-medium text-sm"
-            />
+            <div className="relative w-24 focus-within:w-96 transition-all duration-300 ease-in-out">
+              <FiSearch className="absolute left-3 top-2.5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search Food Item..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 pr-3 py-2 w-full border border-gray-500 rounded font-medium text-sm focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-all duration-300 ease-in-out"
+              />
+            </div>
             <button
               onClick={() => router.push("/foodItem/add")}
-              className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600"
+              className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 cursor-pointer"
             >
               Add Food Item
             </button>
@@ -82,7 +95,7 @@ const FoodItemList = () => {
             {filteredFoodList.map((food) => (
               <div
                 key={food.id}
-                className="bg-white shadow rounded overflow-hidden hover:shadow-2xl cursor-pointer"
+                className="bg-white shadow rounded overflow-hidden hover:shadow-2xl"
                 onClick={() => openModal(food)}
               >
                 <Swiper autoplay={{ delay: 5000 }} modules={[Thumbs, Autoplay]}>
@@ -113,17 +126,11 @@ const FoodItemList = () => {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleToggle(food.id);
+                          promptToggle(food.id, food.name, food.available);
                         }}
-                        className={`w-11 h-6 rounded-full flex items-center transition duration-300 ${
-                          food.available ? "bg-green-500" : "bg-red-500"
-                        }`}
+                        className={`cursor-pointer inline-flex h-6 w-11 items-center rounded-full transition-all duration-300 ${food.available ? "bg-green-500 scale-90" : "bg-red-500 scale-90"}`}
                       >
-                        <span
-                          className={`h-4 w-4 bg-white rounded-full transform transition ${
-                            food.available ? "translate-x-6" : "translate-x-1"
-                          }`}
-                        />
+                        <span className={`h-4 w-4 transform rounded-full bg-white transition-transform duration-300 ${food.available ? "translate-x-6" : "translate-x-1"}`} />
                       </button>
                       <span>{food.available ? "Available" : "Unavailable"}</span>
                     </div>
@@ -135,15 +142,15 @@ const FoodItemList = () => {
                           router.push(`/foodItem/edit/${food.id}`);
                         }}
                       >
-                        <FaEdit className="text-orange-500 hover:text-orange-600" />
+                        <FaEdit className="text-orange-500 hover:text-orange-600 cursor-pointer" />
                       </button>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDelete(food.id);
+                          promptDelete(food.id, food.name);
                         }}
                       >
-                        <MdDelete className="text-red-500 hover:text-red-600" />
+                        <MdDelete className="text-red-500 hover:text-red-600 cursor-pointer" />
                       </button>
                     </div>
                   </div>
@@ -154,7 +161,7 @@ const FoodItemList = () => {
         )}
 
         {!isLoading && totalPages > 1 && (
-          <div className="flex justify-center items-center gap-2 py-6">
+          <div className="flex justify-end items-center gap-2 py-6">
             <button
               onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
@@ -166,9 +173,8 @@ const FoodItemList = () => {
               <button
                 key={i}
                 onClick={() => setCurrentPage(i + 1)}
-                className={`px-3 py-1 rounded ${
-                  currentPage === i + 1 ? "bg-orange-500 text-white" : "bg-orange-100"
-                }`}
+                className={`px-3 py-1 rounded ${currentPage === i + 1 ? "bg-orange-500 text-white" : "bg-orange-100"
+                  }`}
               >
                 {i + 1}
               </button>
@@ -183,6 +189,63 @@ const FoodItemList = () => {
           </div>
         )}
 
+        {confirmToggleId !== null && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300"
+            style={{ backgroundColor: "rgba(0, 0, 0, 0.7)" }}
+          >            <div className="bg-white rounded-xl p-6 w-full max-w-md text-center animate-slideUp">
+              <h2 className="text-lg font-semibold mb-4 text-gray-800">Change Availability?</h2>
+              <p className="text-sm text-gray-600 mb-6">
+                Are you sure you want to mark <span className="font-bold text-orange-600">{toggleTitle}</span> as{" "}
+                <span className={`font-bold ${!toggleStatus ? "text-green-600" : "text-red-600"}`}>
+                  {!toggleStatus ? "Available" : "Unavailable"}
+                </span>?
+              </p>
+              <div className="flex justify-center gap-4">
+                <button
+                  onClick={() => setConfirmToggleId(null)}
+                  className="px-4 py-2 border rounded hover:bg-gray-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmToggle}
+                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {confirmDeleteId !== null && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300"
+            style={{ backgroundColor: "rgba(0, 0, 0, 0.7)" }}
+          >            <div className="bg-white rounded-xl p-6 w-full max-w-md text-center animate-slideUp">
+              <h2 className="text-lg font-semibold mb-4 text-gray-800">Delete Food Item?</h2>
+              <p className="text-sm text-gray-600 mb-6">
+                Are you sure you want to permanently delete <span className="font-bold text-red-600">{deleteTitle}</span>?
+              </p>
+              <div className="flex justify-center gap-4">
+                <button
+                  onClick={() => setConfirmDeleteId(null)}
+                  className="px-4 py-2 border rounded hover:bg-gray-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Render modal only if visible */}
         {isVisible && selectedFood && (
           <div className="fixed inset-0 bg-opacity-50 z-50 flex justify-center items-center p-4">
@@ -190,7 +253,7 @@ const FoodItemList = () => {
           </div>
         )}
       </div>
-    </div>
+    </div >
   );
 };
 

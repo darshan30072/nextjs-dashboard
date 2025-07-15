@@ -6,16 +6,29 @@ import { addCategory, deleteCategory, editAvailability, editCategory, getCategor
 export function useCategoriesVM() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
+
     const [editId, setEditId] = useState<number | null>(null);
     const [editInput, setEditInput] = useState("");
+
     const [newCategory, setNewCategory] = useState("");
     const [showModal, setShowModal] = useState(false);
+
     const [categoryError, setCategoryError] = useState("");
+
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [searchTerm, setSearchTerm] = useState("");
+
     const addInputRef = useRef<HTMLInputElement>(null);
     const editInputRef = useRef<HTMLInputElement>(null);
+
+    const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+    const [confirmDeleteTitle, setConfirmDeleteTitle] = useState<string>("");
+
+    const [confirmToggleId, setConfirmToggleId] = useState<number | null>(null);
+    const [confirmToggleStatus, setConfirmToggleStatus] = useState<boolean | null>(null);
+    const [confirmToggleTitle, setConfirmToggleTitle] = useState<string | null>(null);
+
     const itemsPerPage = 8;
 
     useEffect(() => {
@@ -25,7 +38,7 @@ export function useCategoriesVM() {
     useEffect(() => {
         if (showModal && addInputRef.current) {
             addInputRef.current.focus();
-        }   
+        }
     }, [showModal]);
 
     useEffect(() => {
@@ -53,8 +66,7 @@ export function useCategoriesVM() {
 
     const handleAddCategory = async () => {
         if (!newCategory.trim()) {
-            setCategoryError("Category name is required");
-            toast.error("Category name is required");
+            setCategoryError("Category title is required");
             return;
         }
         try {
@@ -100,8 +112,14 @@ export function useCategoriesVM() {
         }
     };
 
-    const handleDelete = async (id: number) => {
-        if (!confirm("Are you sure you want to delete this category?")) return;
+    const promptDelete = (id: number, title: string) => {
+        setConfirmDeleteId(id);
+        setConfirmDeleteTitle(title);
+    };
+
+    const confirmDelete = async () => {
+        if (confirmDeleteId === null) return;
+        const id = confirmDeleteId;
         const original = [...categories];
         setCategories(prev => prev.filter(c => c.id_int !== id));
         try {
@@ -109,25 +127,37 @@ export function useCategoriesVM() {
             toast.success("Category deleted successfully");
             await fetchCategory(currentPage);
         } catch (err) {
+            console.error(err)
             toast.error("Failed to delete category");
-            console.error(err);
             setCategories(original);
+        } finally {
+            setConfirmDeleteId(null);
+            setConfirmDeleteTitle("");
         }
     };
 
-    const handleToggle = async (id: number, status: boolean) => {
+    const confirmToggleAvailability = async () => {
+        if (confirmToggleId === null || confirmToggleStatus === null) return;
+
         try {
-            const updated = await editAvailability(id, status);
+            const updatedCategory = await editAvailability(confirmToggleId, confirmToggleStatus);
+
             setCategories(prev =>
                 prev.map(c =>
-                    c.id_int === id ? { ...c, is_active: updated.is_active } : c
+                    c.id_int === confirmToggleId
+                        ? { ...c, is_active: updatedCategory.is_active }
+                        : c
                 )
             );
-            toast.success(`Category marked as ${updated.is_active ? "Active" : "Inactive"}`);
-            await fetchCategory(currentPage);
+
+            toast.success(`Category marked as ${updatedCategory.is_active ? "Active" : "Inactive"}`);
         } catch (err) {
             toast.error("Failed to toggle availability");
             console.error(err);
+        } finally {
+            setConfirmToggleId(null);
+            setConfirmToggleStatus(false);
+            setConfirmToggleTitle("");
         }
     };
 
@@ -159,7 +189,17 @@ export function useCategoriesVM() {
         handleAddCategory,
         handleEdit,
         handleUpdate,
-        handleDelete,
-        handleToggle
+        confirmDeleteId,
+        confirmDeleteTitle,
+        setConfirmDeleteId,
+        promptDelete,
+        confirmDelete,
+        confirmToggleId,
+        confirmToggleStatus,
+        confirmToggleTitle,
+        setConfirmToggleId,
+        setConfirmToggleStatus,
+        setConfirmToggleTitle,
+        confirmToggleAvailability,
     };
 }

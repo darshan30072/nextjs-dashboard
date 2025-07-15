@@ -42,11 +42,27 @@ export async function addFoodItem(formData: {
   form.append("portions", JSON.stringify(portions));
   formData.images.forEach((img) => form.append("files", img));
   formData.videos?.forEach((vid) => form.append("files", vid));
+
+  for (const [key, val] of form.entries()) {
+    if (val instanceof File) {
+      console.log(`${key} => File:`, val.name, val.type, val.size);
+    } else {
+      console.log(`${key} =>`, val);
+    }
+  }
+
   const res = await axiosInstance.post("/v1/restaurant/add-item", form);
   return res.data;
 }
 
 export async function updateFoodItem(id: number, formData: FormData) {
+  for(const [key, val] of formData.entries()) {
+    if (val instanceof File) {
+      console.log(`${key} => FIle:`, val.name, val.type, val.size);
+    } else {
+      console.log(`${key} =>`, val);
+    }
+  }
   const res = await axiosInstance.put(`/v1/restaurant/update-item/${id}`, formData);
   return res.data;
 }

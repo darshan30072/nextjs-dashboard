@@ -45,7 +45,7 @@ const FoodItemModal = forwardRef<HTMLDivElement, FoodItemModalProps>(
         >
           <button
             onClick={onClose}
-            className="absolute top-2.5 right-3.5 font-extrabold text-gray-700 hover:text-black hover:border-2 hover:border-gray-500 rounded-full text-2xl"
+            className="absolute top-2.5 right-3.5 font-extrabold text-gray-700 hover:text-black hover:border-2 hover:border-gray-500 rounded-full text-2xl cursor-pointer"
             aria-label="Close modal"
           >
             <IoClose />

@@ -4,17 +4,17 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { addFoodItem } from "@/services/foodItemService";
 import toast from "react-hot-toast";
-import { FoodCategory } from "@/models/foodItemModel";
+import { FoodCategory, FormData } from "@/models/foodItemModel";
 
 export function useAddFoodItemVM() {
   const router = useRouter();
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: "",
     category: "" as FoodCategory,
     details: "",
     ingredients: [] as string[],
-    portionPrices: [{ portion: "", price: "" }],
+    portionPrices: [],
     preparationTime: "",
     available: false,
     images: [] as File[],
@@ -53,7 +53,7 @@ export function useAddFoodItemVM() {
 
   const handleAddIngredient = () => {
     if (ingredientInput.trim()) {
-      const newIngredients = ingredientInput.split(",").map(i => i.trim()).filter(i => i);
+      const newIngredients = ingredientInput.split(",").map(i => i.trim()).filter(i => i).map(i => i.charAt(0).toUpperCase() + i.slice(1).toLowerCase());
       setFormData(prev => ({
         ...prev,
         ingredients: [...prev.ingredients, ...newIngredients],
@@ -75,41 +75,49 @@ export function useAddFoodItemVM() {
     }));
   };
 
-  const handlePortionChange = (index: number, field: "portion" | "price", value: string) => {
-    const updated = [...formData.portionPrices];
-    updated[index][field] = value;
-    setFormData(prev => ({ ...prev, portionPrices: updated }));
+  const addPortion = (portionObj: { portion: string; price: string }) => {
+    if (!portionObj.portion.trim() || !portionObj.price.trim()) return;
 
-    const hasValidPortion = updated.some(p => p.portion.trim() && p.price.trim());
+    // Validate price is a number and greater than 0
+    const priceValue = Number(portionObj.price);
+    if (isNaN(priceValue) || priceValue <= 0) {
+      setFormErrors(prev => ({
+        ...prev,
+        portions: "Price must be a valid number greater than 0.",
+      }));
+      return;
+    }
 
+    setFormData(prev => ({
+      ...prev,
+      portionPrices: [...prev.portionPrices, portionObj],
+    }));
+
+    // Clear error if any
     setFormErrors(prev => {
-      const updatedErrors = { ...prev };
-      if (hasValidPortion) {
-        delete updatedErrors.portions;
-      }
-      return updatedErrors;
+      const updated = { ...prev };
+      delete updated.portions;
+      return updated;
     });
   };
 
-  const addPortion = (portionObj?: { portion: string; price: string }) => {
+  const handlePortionChange = (index: number, field: "portion" | "price", value: string) => {
     setFormData(prev => {
-      const cleaned = prev.portionPrices.filter(p => p.portion && p.price);
-      const newList = [...cleaned, portionObj || { portion: "", price: "" }];
-
-      const hasValidPortion = newList.some(p => p.portion && p.price);
-
-      if (hasValidPortion) {
-        setFormErrors(prev => {
-          const updatedErrors = { ...prev };
-          delete updatedErrors.portions;
-          return updatedErrors;
-        });
-      }
-
+      const updated = prev.portionPrices.map((portionObj, i) =>
+        i === index ? { ...portionObj, [field]: value } : portionObj
+      );
+      // Remove any portions that are now empty
+      const cleaned = updated.filter(p => p.portion.trim() !== "" || p.price.trim() !== "");
       return {
         ...prev,
-        portionPrices: newList,
+        portionPrices: cleaned,
       };
+    });
+
+    setFormErrors(prev => {
+      const updatedErrors = { ...prev };
+      delete updatedErrors.portions;
+      return updatedErrors;
     });
   };
 
@@ -147,19 +155,53 @@ export function useAddFoodItemVM() {
     if (!formData.category) errors.category = "Category is required.";
     if (!formData.details.trim()) errors.details = "Description is required.";
     if (formData.ingredients.length === 0) errors.ingredients = "Add at least one ingredient.";
-    if (formData.portionPrices.filter(p => p.portion && p.price).length === 0)
-      errors.portions = "Add at least one portion.";
-    if (!formData.preparationTime.trim()) errors.preparationTime = "Preparation time required.";
 
-    if (Object.keys(errors).length > 0) {
-      setFormErrors(errors);
-      toast.error("Please fill in all required fields.");
-      return;
+    // Portion price validation
+    const validPortions = formData.portionPrices.filter(p => {
+      if (!p.portion.trim() || !p.price.trim()) return false;
+      const priceValue = Number(p.price);
+      return !isNaN(priceValue) && priceValue > 0;
+    });
+
+    if (validPortions.length === 0) {
+      errors.portions = "At least one valid portion with a numeric price greater than 0 is required.";
+    } else {
+      // Optionally, check for any invalid portions and give a more specific error
+      const hasInvalid = formData.portionPrices.some(p => {
+        if (!p.portion.trim() || !p.price.trim()) return false;
+        const priceValue = Number(p.price);
+        return isNaN(priceValue) || priceValue <= 0;
+      });
+      if (hasInvalid) {
+        errors.portions = "Each portion price must be a valid number greater than 0.";
+      }
     }
 
+    const prepTime = Number(formData.preparationTime);
+    if (!formData.preparationTime.trim()) {
+      errors.preparationTime = "Preparation time is required.";
+    } else if (isNaN(prepTime)) {
+      errors.preparationTime = "Preparation time must be a valid number.";
+    } else if (prepTime <= 0) {
+      errors.preparationTime = "Preparation time must be greater than 0.";
+    } else if (prepTime > 30) {
+      errors.preparationTime = "Preparation time cannot exceed 30 minutes.";
+    }
+
+    // If errors exist, prevent submission
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+    setFormErrors({});
     setLoading(true);
+
     try {
-      await addFoodItem({ ...formData, images: selectedFiles });
+      await addFoodItem({
+        ...formData,
+        portionPrices: validPortions, // Only send valid portions!
+        images: selectedFiles,
+      });
       toast.success("Food Item Added Successfully!");
       router.push("/foodItem");
     } catch (err) {
@@ -170,6 +212,7 @@ export function useAddFoodItemVM() {
     }
   };
 
+
   const resetForm = () => {
     const confirmed = window.confirm("Are you sure you want to reset the form?");
     if (!confirmed) return;
@@ -178,7 +221,7 @@ export function useAddFoodItemVM() {
       category: "" as FoodCategory,
       details: "",
       ingredients: [],
-      portionPrices: [{ portion: "", price: "" }],
+      portionPrices: [],
       preparationTime: "",
       available: false,
       images: [],
@@ -205,8 +248,8 @@ export function useAddFoodItemVM() {
     handleChange,
     handleAddIngredient,
     handleRemoveIngredient,
-    handlePortionChange,
     addPortion,
+    handlePortionChange,
     removePortion,
     handleDrop,
     handleRemoveFile,

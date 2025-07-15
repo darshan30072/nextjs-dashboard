@@ -33,7 +33,7 @@ export async function editAvailability(id: number, currentStatus: boolean) {
   const res = await axiosInstance.put(`/v1/restaurant/toggle-category-status/${id}`, {
     is_active: !currentStatus,
   });
-  return res.data?.data;
+  return res.data.data.updatedCategory;
 }
 
 export async function deleteCategory(id: number) {

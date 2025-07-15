@@ -23,19 +23,27 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelect, onStatusChange,
         <div className="text-gray-400 font-normal">
           Total {activeOrdersCount} items
         </div>
-        <div className="flex items-center gap-2 text-gray-700">
-          <input
-            type="date"
-            value={filterDate || ''}
-            onChange={(e) => handleDateChange(e.target.value)}
-            className="border border-gray-300 rounded-lg px-2 py-1 text-sm"
-          />
+        <div className="flex items-center gap-1 text-gray-700">
+          <div className="relative">
+            <input
+              type="date"
+              value={filterDate || ''}
+              onChange={(e) => handleDateChange(e.target.value)}
+              className="appearance-none border border-gray-300 rounded-lg px-2 py-1 text-sm text-gray-700 w-[120px] peer"
+            />
+            {!filterDate && (
+              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 bg-white text-sm pr-3 pointer-events-none peer-focus:hidden">
+                Select date
+              </span>
+            )}
+          </div>
+
           <button
             onClick={clearFilter}
             className={`underline ${filterDate ? 'text-xl font-black text-red-500 cursor-pointer' : 'text-gray-300 cursor-not-allowed'}`}
           >
             {/* <VscClearAll/> */}
-            <MdOutlineClear/>
+            <MdOutlineClear />
           </button>
         </div>
       </div>
