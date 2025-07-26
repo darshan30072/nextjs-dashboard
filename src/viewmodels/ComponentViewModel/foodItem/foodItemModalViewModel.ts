@@ -1,4 +1,3 @@
-// src/viewmodels/useFoodItemModalVM.ts
 "use client";
 
 import { FoodItem } from "@/models/foodItemModel";
@@ -16,7 +15,7 @@ export default function useFoodItemModalVM() {
 
   const closeModal = () => {
     setIsVisible(false);
-    setTimeout(() => setItem(null), 300); // matches the animation
+    setTimeout(() => setItem(null), 300); 
   };
 
   const allMedia = item?.imagePreview?.length

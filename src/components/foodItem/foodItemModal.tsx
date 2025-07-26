@@ -39,19 +39,18 @@ const FoodItemModal = forwardRef<HTMLDivElement, FoodItemModalProps>(
       >
         <div
           ref={ref}
-          className={`bg-white rounded-xl max-w-3xl w-full p-10 relative
-                      transform transition-all duration-300
-                      ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+          className={`bg-white rounded-xl max-w-3xl w-full p-8 relative transform transition-all duration-300
+            ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
         >
           <button
             onClick={onClose}
-            className="absolute top-2.5 right-3.5 font-extrabold text-gray-700 hover:text-black hover:border-2 hover:border-gray-500 rounded-full text-2xl cursor-pointer"
+            className="absolute top-2 right-2 font-extrabold text-gray-700 hover:text-black hover:border-2 hover:border-gray-500 hover:bg-gray-50 rounded-full text-2xl cursor-pointer"
             aria-label="Close modal"
           >
             <IoClose />
           </button>
 
-          <div className="relative w-full h-64 rounded-lg overflow-hidden mb-3">
+          <div className="relative w-full h-80 rounded-lg overflow-hidden mb-3">
             <Swiper
               spaceBetween={10}
               pagination={{ clickable: true }}
@@ -65,7 +64,7 @@ const FoodItemModal = forwardRef<HTMLDivElement, FoodItemModalProps>(
                   {isVideo(url) ? (
                     <video
                       src={url}
-                      className="w-full h-64 object-cover rounded-lg"
+                      className="w-full h-80 object-cover rounded-lg"
                       autoPlay
                       muted
                       loop

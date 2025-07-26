@@ -6,7 +6,7 @@ import axios from "axios";
 export const getFoodItemById = async (id: number) => {
   try {
     const response = await axiosInstance.get(`/v1/restaurant/item/${id}`);
-
+    
     return response.data;
   } catch (error) {
     console.error("Error fetching food item by ID:", error);

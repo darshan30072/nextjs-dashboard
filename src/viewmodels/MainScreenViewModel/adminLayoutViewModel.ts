@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 function formatRouteTitle(path: string) {
     const segments = path.split('/').filter(Boolean);
@@ -25,6 +25,23 @@ export function useAdminLayoutVM() {
     const goToProfile = useCallback(() => {
         router.push('/profile');
     }, [router]);
+
+    // Set collapsed state based on screen width
+    useEffect(() => {
+        const handleResize = () => {
+            const width = window.innerWidth;
+            if (width >= 1024 && width < 1280) {
+                setCollapsed(true);
+            } else {
+                setCollapsed(false);
+            }
+        };
+
+        handleResize(); // run on mount
+        window.addEventListener('resize', handleResize); // update on resize
+
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     return {
         sidebarOpen,

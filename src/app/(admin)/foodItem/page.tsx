@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Thumbs, Autoplay } from "swiper/modules";
 import { GrFormPrevious, GrFormNext } from "react-icons/gr";
@@ -39,6 +39,16 @@ const FoodItemList = () => {
 
   const router = useRouter();
 
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const pageParam = Number(searchParams.get("page"));
+    if (!isNaN(pageParam) && pageParam >= 1) {
+      setCurrentPage(pageParam);
+    }
+  }, [searchParams, setCurrentPage]);
+
+
   // Use modal VM for modal state & handlers
   const {
     item: selectedFood,
@@ -64,7 +74,7 @@ const FoodItemList = () => {
   }, [isVisible, handleEsc, handleClickOutside]);
 
   return (
-    <div className="p-4 sm:p-5 overflow-y-auto [&::-webkit-scrollbar]:hidden scrollbar-hide">
+    <div className="h-screen p-4 sm:p-5 overflow-y-auto [&::-webkit-scrollbar]:hidden scrollbar-hide">
       <div className="bg-white rounded-xl font-bold mb-5 border border-gray-200 shadow flex flex-col">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 sm:p-6">
           <h1 className="text-lg md:text-xl font-semibold">Food Items</h1>
@@ -139,7 +149,7 @@ const FoodItemList = () => {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          router.push(`/foodItem/edit/${food.id}`);
+                          router.push(`/foodItem/edit/${food.id}?page=${currentPage}`);
                         }}
                       >
                         <FaEdit className="text-orange-500 hover:text-orange-600 cursor-pointer" />
@@ -160,34 +170,61 @@ const FoodItemList = () => {
           </div>
         )}
 
-        {!isLoading && totalPages > 1 && (
-          <div className="flex justify-end items-center gap-2 py-6">
-            <button
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="px-3 py-1 hover:bg-gray-200 rounded"
-            >
-              <GrFormPrevious />
-            </button>
-            {Array.from({ length: totalPages }).map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrentPage(i + 1)}
-                className={`px-3 py-1 rounded ${currentPage === i + 1 ? "bg-orange-500 text-white" : "bg-orange-100"
-                  }`}
-              >
-                {i + 1}
-              </button>
-            ))}
-            <button
-              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              className="px-3 py-1 hover:bg-gray-200 rounded"
-            >
-              <GrFormNext />
-            </button>
-          </div>
-        )}
+        <div className="flex justify-center items-center gap-1 p-6">
+          {/* Previous Button */}
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="flex items-center gap-1 text-orange-500 disabled:opacity-50 px-2 cursor-pointer disabled:cursor-not-allowed"
+          >
+            <GrFormPrevious />
+            <span className="text-sm">Previous</span>
+          </button>
+
+          {/* Page Numbers with Ellipsis */}
+          {Array.from({ length: totalPages }, (_, i) => i + 1)
+            .filter((page) => {
+              const isStartOrEnd = page === 1 || page === totalPages;
+              const isNearCurrent = Math.abs(page - currentPage) <= 1;
+              return isStartOrEnd || isNearCurrent;
+            })
+            .reduce<number[]>((acc, curr, i, arr) => {
+              if (i > 0 && curr - arr[i - 1] > 1) acc.push(-1); // insert ellipsis
+              acc.push(curr);
+              return acc;
+            }, [])
+            .map((page, index) =>
+              page === -1 ? (
+                <span
+                  key={`ellipsis-${index}`}
+                  className="px-2 py-1 text-gray-500 bg-gray-100 rounded"
+                >
+                  ...
+                </span>
+              ) : (
+                <button
+                  key={`page-${page}`}
+                  onClick={() => setCurrentPage(page)}
+                  className={`px-3 py-1 rounded cursor-pointer ${currentPage === page
+                      ? "bg-orange-500 text-white"
+                      : "text-orange-500 hover:bg-gray-200"
+                    }`}
+                >
+                  {page}
+                </button>
+              )
+            )}
+
+          {/* Next Button */}
+          <button
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className="flex items-center gap-1 text-orange-500 disabled:opacity-50 px-2 cursor-pointer disabled:cursor-not-allowed"
+          >
+            <span className="text-sm">Next</span>
+            <GrFormNext />
+          </button>
+        </div>
 
         {confirmToggleId !== null && (
           <div

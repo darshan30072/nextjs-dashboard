@@ -6,12 +6,15 @@ import { IoMdAddCircle } from "react-icons/io";
 import Loader from "@/components/loader";
 import { useCategoriesVM } from "@/viewmodels/MainScreenViewModel/categories/CategoriesViewModal";
 import { useEditFoodItemVM } from "@/viewmodels/MainScreenViewModel/foodItem/edit/editFoodItemViewModel";
+import { useState } from "react";
 
 export default function EditFoodItem() {
   const router = useRouter();
   const params = useParams();
   const id = Number(params.id);
   const { categories: dynamicCats, loading: catsLoading } = useCategoriesVM();
+
+  const [showResetModal, setShowResetModal] = useState(false);
 
   const {
     loading,
@@ -39,7 +42,7 @@ export default function EditFoodItem() {
   } = useEditFoodItemVM(id);
 
   const commonInputClasses =
-    "w-full h-[42px] px-3 py-2 border rounded focus:outline-none focus:ring-1 focus:ring-orange-300 transition-all duration-200";
+    "w-full h-[42px] px-3 py-2 border rounded focus:outline-none focus:ring-1 focus:ring-gray-400 transition-all duration-200";
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,17 +65,17 @@ export default function EditFoodItem() {
                 <div className="flex justify-between items-center mt-3">
                   <h2 className="text-xl font-semibold">Edit Food Item</h2>
                   <button type="button"
-                    onClick={resetForm}
+                    onClick={() => {setShowResetModal(true)}}
                     className={"text-sm text-gray-400 hover:text-gray-600 cursor-pointer"}
                   >
                     RESET
                   </button>
                 </div>
-                <div className="mb-8">
+                <div className="mt-5 mb-8">
                   {/* Category & Item Name */}
-                  <div className="flex gap-4">
+                  <div className="flex gap-4 mt-3">
                     {/* Category */}
-                    <div className="mt-4 w-1/2">
+                    <div className="w-1/2">
                       <label className="font-semibold">
                         CATEGORIES{" "}
                         <span className="text-red-500 text-lg animate-pulse" aria-hidden="true">*</span>
@@ -91,13 +94,15 @@ export default function EditFoodItem() {
                           </option>
                         ))}
                       </select>
-                      {formErrors.category && (
-                        <p className="text-red-500 text-sm mt-1 font-semibold">{formErrors.category}</p>
-                      )}
+                      <div className="min-h-[15px]">
+                        {formErrors.category && (
+                          <p className="text-red-500 text-sm mt-1 font-semibold">{formErrors.category}</p>
+                        )}
+                      </div>
                     </div>
 
                     {/* Item Name */}
-                    <div className="mt-4 w-1/2">
+                    <div className="w-1/2">
                       <label className="font-semibold">
                         ITEM NAME{" "}
                         <span className="text-red-500 text-lg animate-pulse" aria-hidden="true">*</span>
@@ -111,14 +116,16 @@ export default function EditFoodItem() {
                         autoComplete="off"
                         className={`${commonInputClasses} ${formErrors.name ? "border-red-500" : "border-gray-500"}`}
                       />
-                      {formErrors.name && (
-                        <p className="text-red-500 text-sm mt-1 font-semibold">{formErrors.name}</p>
-                      )}
+                      <div className="min-h-[15px]">
+                        {formErrors.name && (
+                          <p className="text-red-500 text-sm mt-1 font-semibold">{formErrors.name}</p>
+                        )}
+                      </div>
                     </div>
                   </div>
 
                   {/* Description */}
-                  <div className="mt-4 h-[78px]">
+                  <div className="mt-3">
                     <label className="font-semibold">
                       DESCRIPTION{" "}
                       <span className="text-red-500 text-lg animate-pulse" aria-hidden="true">*</span>
@@ -128,16 +135,18 @@ export default function EditFoodItem() {
                       placeholder="Item description"
                       value={formData.details}
                       onChange={handleChange}
-                      rows={3}
-                      className={`${commonInputClasses} h-[50px] ${formErrors.details ? "border-red-500" : "border-gray-500"}`}
+                      rows={2}
+                      className={`${commonInputClasses} ${formErrors.details ? "border-red-500" : "border-gray-500"}`}
                     />
-                    {formErrors.details && (
-                      <p className="text-red-500 text-sm font-semibold">{formErrors.details}</p>
-                    )}
+                    <div className="min-h-[15px]">
+                      {formErrors.details && (
+                        <p className="text-red-500 text-sm mt-1 font-semibold">{formErrors.details}</p>
+                      )}
+                    </div>
                   </div>
 
                   {/* Ingredients */}
-                  <div className="mt-4">
+                  <div className="mt-3">
                     <label className="font-semibold">
                       INGREDIENTS{" "}
                       <span className="text-red-500 text-lg animate-pulse" aria-hidden="true">*</span>
@@ -176,13 +185,15 @@ export default function EditFoodItem() {
                         ADD
                       </button>
                     </div>
-                    {formErrors.ingredients && (
-                      <p className="text-red-500 text-sm mt-1 font-semibold">{formErrors.ingredients}</p>
-                    )}
+                    <div className="min-h-[15px]">
+                      {formErrors.ingredients && (
+                        <p className="text-red-500 text-sm mt-1 font-semibold">{formErrors.ingredients}</p>
+                      )}
+                    </div>
                   </div>
 
                   {/* Portions */}
-                  <div className="mt-4">
+                  <div className="mt-3">
                     {/* New portion input */}
                     <div className="flex items-end gap-4 pb-0.5">
                       {/* Portion Input */}
@@ -298,14 +309,15 @@ export default function EditFoodItem() {
                           </div>
                         </div>
                       ))}
-                    {formErrors.portions && (
-                      <p className="text-red-500 text-sm mt-1 font-semibold">{formErrors.portions}</p>
-                    )}
-
+                    <div className="min-h-[15px]">
+                      {formErrors.portions && (
+                        <p className="text-red-500 text-sm mt-1 font-semibold">{formErrors.portions}</p>
+                      )}
+                    </div>
                   </div>
 
                   {/* Upload Images/Videos */}
-                  <div className="mt-4">
+                  <div className="mt-2">
                     <label className="font-semibold" htmlFor="upload-image">UPLOAD PHOTO/VIDEO</label>
                     <div
                       onDrop={handleDrop}
@@ -325,7 +337,7 @@ export default function EditFoodItem() {
                           className="hidden"
                         />
                         <div className="flex flex-col items-center text-gray-400">
-                          <div className="bg-orange-100 rounded-full px-3 py-1">
+                          <div className="bg-orange-100 rounded-full px-2 py-1">
                             <span className="text-orange-500 text-xl font-bold">+</span>
                           </div>
                           <span className="text-sm font-medium">Add</span>
@@ -387,12 +399,14 @@ export default function EditFoodItem() {
                         )}
                       </div>
                     </div>
+                    <div className="min-h-[15px]">
+                    </div>
                   </div>
 
                   {/* Preparation time/ Availability */}
-                  <div className="flex gap-4">
+                  <div className="flex gap-4 mt-2">
                     {/* Preparation Time */}
-                    <div className="mt-4 w-1/2">
+                    <div className="w-1/2">
                       <label className="font-semibold">
                         PREPARATION TIME{" "}
                         <span className="text-red-500 text-lg animate-pulse" aria-hidden="true">*</span>
@@ -405,13 +419,15 @@ export default function EditFoodItem() {
                         onChange={handleChange}
                         className={`${commonInputClasses} ${formErrors.preparationTime ? "border-red-500" : "border-gray-500"}`}
                       />
-                      {formErrors.preparationTime && (
-                        <p className="text-red-500 text-sm mt-1 font-semibold">{formErrors.preparationTime}</p>
-                      )}
+                      <div className="min-h-[15px]">
+                        {formErrors.preparationTime && (
+                          <p className="text-red-500 text-sm mt-1 font-semibold">{formErrors.preparationTime}</p>
+                        )}
+                      </div>
                     </div>
 
                     {/* Available toggle */}
-                    <div className="w-1/2 mt-4 flex items-end">
+                    <div className="w-1/2 pl-3 pt-0.5">
                       <div className="w-full">
                         <label className="font-semibold">AVAILABLE</label>
                         <div className="flex items-center h-[42px]"> {/* Match height to input */}
@@ -452,6 +468,34 @@ export default function EditFoodItem() {
                   </button>
                 </div>
               </form>
+            )}
+            {showResetModal && (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300"
+                style={{ backgroundColor: "rgba(0, 0, 0, 0.7)" }}
+              >
+                <div className="bg-white rounded-xl max-w-md w-full p-6 text-center animate-slideUp">
+                  <h2 className="text-lg font-semibold mb-4 text-gray-800">Confirm Reset?</h2>
+                  <p className="text-sm text-gray-600 mb-6 font-semibold">Are you sure you want to reset the form? All changes will be lost.</p>
+                  <div className="flex justify-center gap-4 font-semibold">
+                    <button
+                      onClick={() => setShowResetModal(false)}
+                      className="px-4 py-2 border rounded hover:bg-gray-100 cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => {
+                        resetForm();
+                        setShowResetModal(false);
+                      }}
+                      className="px-4 py-2 border rounded bg-orange-600 hover:bg-orange-700 text-white cursor-pointer"
+                    >
+                      Yes, Reset
+                    </button>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         </div>

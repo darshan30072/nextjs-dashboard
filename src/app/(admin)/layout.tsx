@@ -20,12 +20,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="flex h-screen overflow-hidden">
             {/* Sidebar */}
             <div
-                className={`group fixed z-30 top-0 left-0 h-screen bg-white shadow flex flex-col transition-[width] ease-in-out
-                    ${collapsed ? 'w-16 duration-0 group-hover:w-56 group-hover:duration-500' : 'w-56 duration-500'}`}
+                className={`group fixed z-30 top-0 left-0 h-screen bg-white shadow flex flex-col transition-[all] ease-in-out
+                    ${collapsed ? 'w-16 duration-500 group-hover:w-56 group-hover:duration-500' : 'w-56 duration-500'}
+                    ${sidebarOpen ? 'block' : 'hidden'} lg:block`}
             >
-                <SideNav collapsed={collapsed} setCollapsed={setCollapsed} />
+                <SideNav
+                    collapsed={collapsed}
+                    setCollapsed={setCollapsed}
+                    setSidebarOpen={setSidebarOpen}
+                />
             </div>
-
             {/* Overlay for mobile */}
             {sidebarOpen && (
                 <div
@@ -36,9 +40,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
             {/* Main Content */}
             <div
-                className={`flex-1 flex flex-col overflow-y-auto bg-gray-100 transition-all duration-300 ease-in-out
-          ${collapsed ? 'pl-16' : 'pl-56'}`}
+                className={`flex-1 flex flex-col overflow-y-auto bg-gray-100 transition-[all] duration-500 ease-in-out
+                  ${collapsed ? 'lg:ml-16 duration-500' : 'xl:ml-56 lg:ml-56 duration-500'}`}
             >
+
                 {/* Header */}
                 <div className="sticky top-0 z-10 flex items-center lg:justify-between h-16 p-6 bg-white shadow">
                     <button

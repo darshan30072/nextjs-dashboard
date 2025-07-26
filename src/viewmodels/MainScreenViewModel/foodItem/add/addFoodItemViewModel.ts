@@ -214,8 +214,6 @@ export function useAddFoodItemVM() {
 
 
   const resetForm = () => {
-    const confirmed = window.confirm("Are you sure you want to reset the form?");
-    if (!confirmed) return;
     setFormData({
       name: "",
       category: "" as FoodCategory,
@@ -230,8 +228,17 @@ export function useAddFoodItemVM() {
       videoPreviews: [],
     });
     setIngredientInput("");
-    setSelectedFiles([]);
     setNewPortion({ portion: "", price: "" });
+    setSelectedFiles([]);
+    setFormErrors({
+      name: "",
+      category: "",
+      details: "",
+      ingredients: "",
+      portions: "",
+      preparationTime: "",
+    });
+    setSelectedFiles([]);
   };
 
   return {

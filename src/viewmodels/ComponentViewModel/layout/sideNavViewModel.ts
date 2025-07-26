@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { removeCookie } from '@/constant/cookie';
 
-export function useSideNavVM(setCollapsed: (value: boolean) => void, collapsed: boolean) {
+export function useSideNavVM() {
   const router = useRouter();
 
   const handleLogout = () => {
@@ -11,12 +11,7 @@ export function useSideNavVM(setCollapsed: (value: boolean) => void, collapsed: 
     router.replace('/login');
   };
 
-  const toggleCollapse = () => {
-    setCollapsed(!collapsed);
-  };
-
   return {
     handleLogout,
-    toggleCollapse,
   };
 }

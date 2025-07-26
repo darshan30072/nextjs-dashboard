@@ -6,7 +6,6 @@ import OrderActionButtons from "./orderActionButtons";
 import { MdOutlineClear } from "react-icons/md";
 import { OrderListProps } from "@/models/ordersModel";
 import { useOrderListVM } from "@/viewmodels/ComponentViewModel/orders/orderListViewModel";
-// import { VscClearAll } from "react-icons/vsc";
 
 const OrderList: React.FC<OrderListProps> = ({ orders, onSelect, onStatusChange, onDelete }) => {
   const {
@@ -42,7 +41,6 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelect, onStatusChange,
             onClick={clearFilter}
             className={`underline ${filterDate ? 'text-xl font-black text-red-500 cursor-pointer' : 'text-gray-300 cursor-not-allowed'}`}
           >
-            {/* <VscClearAll/> */}
             <MdOutlineClear />
           </button>
         </div>
@@ -51,7 +49,8 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelect, onStatusChange,
       {filteredOrders.map((order) => (
         <div
           key={order.id}
-          className="p-4 sm:p-5 rounded-xl flex flex-col bg-gray-50 hover:bg-gray-100 shadow-md text-gray-700"
+          onClick={() => onSelect(order)}
+          className="p-4 sm:p-5 rounded-xl flex flex-col bg-gray-50 border border-gray-100 hover:bg-gray-100 shadow-md text-gray-700"
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
             <div className="flex gap-1 font-semibold">
@@ -73,12 +72,12 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelect, onStatusChange,
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2">
             <div>
-              <button
+              {/* <button
                 onClick={() => onSelect(order)}
-                className="bg-orange-500 text-white text-sm px-3 py-1 rounded-lg"
+                className="bg-orange-500 text-white text-sm px-3 py-1 rounded-lg hover:bg-orange-600 cursor-pointer"
               >
                 View Details
-              </button>
+              </button> */}
             </div>
             <div className="flex justify-start sm:justify-end items-center gap-2 text-sm">
               <OrderActionButtons

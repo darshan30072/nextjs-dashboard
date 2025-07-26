@@ -71,7 +71,7 @@ export default function LoginPage() {
                   id="remember"
                   checked={rememberMe}
                   onChange={() => setRememberMe(prev => !prev)}
-                  className="w-4 h-4 cursor-pointer"
+                  className="w-4 h-4 accent-blue-600 cursor-pointer"
                 />
                 <label htmlFor="remember" className="text-gray-600 font-medium cursor-pointer">
                   Remember me

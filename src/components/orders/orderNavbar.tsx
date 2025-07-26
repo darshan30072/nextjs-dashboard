@@ -8,7 +8,7 @@ const OrderNavbar: React.FC<OrderNavbarProps> = ({ activeTab, onTabChange, order
   const { tabs, getCount } = useOrderNavbarVM(orders);
 
   return (
-    <div className="flex justify-between gap-1 mb-5 bg-gray-100 p-1 rounded-xl">
+    <div className="flex flex-wrap justify-between gap-1 mb-5 bg-gray-100 p-1 rounded-xl">
       {tabs.map(tab => {
         const count = getCount(tab.value);
         return (

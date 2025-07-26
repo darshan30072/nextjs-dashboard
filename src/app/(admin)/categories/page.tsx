@@ -116,31 +116,56 @@ export default function CategoriesList() {
           </table>
 
           {/* Pagination */}
-          <div className="flex justify-end gap-2 py-4">
+          <div className="flex justify-end gap-2 p-6">
+            {/* Previous Button */}
             <button
-              onClick={() => vm.setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={vm.currentPage === 1 || vm.loading}
-              className="px-3 py-1 text-gray-700 hover:bg-gray-100 rounded disabled:opacity-50"
+              onClick={() => vm.setCurrentPage(vm.currentPage - 1)}
+              disabled={vm.currentPage === 1}
+              className="text-orange-500 disabled:opacity-40 cursor-pointer"
             >
               <GrFormPrevious />
             </button>
-            {[...Array(vm.totalPages)].map((_, i) => (
-              <button
-                key={i}
-                onClick={() => vm.setCurrentPage(i + 1)}
-                className={`px-3 py-1 rounded ${vm.currentPage === i + 1 ? "bg-orange-500 text-white" : "bg-orange-100"}`}
-              >
-                {i + 1}
-              </button>
-            ))}
+
+            {/* Page Buttons with Ellipsis */}
+            {Array.from({ length: vm.totalPages }, (_, i) => i + 1)
+              .filter((page) => {
+                const isStartOrEnd = page === 1 || page === vm.totalPages;
+                const isNearCurrent = Math.abs(page - vm.currentPage) <= 1;
+                return isStartOrEnd || isNearCurrent;
+              })
+              .reduce<number[]>((acc, curr, i, arr) => {
+                if (i > 0 && curr - arr[i - 1] > 1) acc.push(-1); // -1 means "..."
+                acc.push(curr);
+                return acc;
+              }, [])
+              .map((page, i) =>
+                page === -1 ? (
+                  <span key={i} className="px-2 text-gray-500">…</span>
+                ) : (
+                  <button
+                    key={page}
+                    onClick={() => vm.setCurrentPage(page)}
+                    className={`px-3 py-1 rounded transition ${vm.currentPage === page
+                        ? "bg-orange-500 text-white"
+                        : "bg-orange-100 hover:bg-orange-200"
+                      } cursor-pointer`}
+                  >
+                    {page}
+                  </button>
+                )
+              )}
+
+            {/* Next Button */}
             <button
-              onClick={() => vm.setCurrentPage((prev) => Math.min(prev + 1, vm.totalPages))}
-              disabled={vm.currentPage === vm.totalPages || vm.loading}
-              className="px-3 py-1 text-gray-700 hover:bg-gray-100 rounded disabled:opacity-50"
+              onClick={() => vm.setCurrentPage(vm.currentPage + 1)}
+              disabled={vm.currentPage === vm.totalPages}
+              className="text-orange-500 disabled:opacity-40 cursor-pointer"
             >
               <GrFormNext />
             </button>
           </div>
+
+
         </div>
 
         {/* Add Category Modal */}
@@ -155,7 +180,6 @@ export default function CategoriesList() {
                 CATEGORIES <span className="text-red-500 text-lg animate-pulse">*</span>
               </label>
               <input
-                ref={vm.addInputRef}
                 type="text"
                 placeholder="Category title"
                 value={vm.newCategory}
@@ -163,7 +187,7 @@ export default function CategoriesList() {
                   vm.setNewCategory(e.target.value);
                   vm.setCategoryError("");
                 }}
-                className={`w-full border px-3 py-2 rounded my-2 font-bold ${vm.categoryError ? "border-red-500" : "border-gray-500"}`}
+                className={`w-full border px-3 py-2 rounded my-2 ${vm.categoryError ? "border-red-500" : "border-gray-500"}`}
               />
               {vm.categoryError && <p className="text-red-500 text-sm mb-2 font-bold">{vm.categoryError}</p>}
               <div className="flex justify-end gap-3 mt-4">
@@ -203,7 +227,7 @@ export default function CategoriesList() {
                 </button>
                 <button
                   onClick={vm.confirmToggleAvailability}
-                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 cursor-pointer"
+                  className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 cursor-pointer"
                 >
                   Confirm
                 </button>
@@ -218,7 +242,8 @@ export default function CategoriesList() {
           <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300"
             style={{ backgroundColor: "rgba(0, 0, 0, 0.7)" }}
-          >            <div className="bg-white rounded-xl max-w-md w-full p-6 text-center animate-slideUp">
+          >
+            <div className="bg-white rounded-xl max-w-md w-full p-6 text-center animate-slideUp">
               <h2 className="text-lg font-semibold mb-4 text-gray-800">
                 Are you sure you want to delete this category?
               </h2>

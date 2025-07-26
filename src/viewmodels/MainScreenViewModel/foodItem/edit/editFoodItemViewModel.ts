@@ -40,7 +40,7 @@ export function useEditFoodItemVM(id: number) {
         category: "" as FoodCategory,
         details: "",
         ingredients: [],
-        portionPrices: [], // 👈 now properly typed
+        portionPrices: [],
         preparationTime: "",
         available: false,
     });
@@ -58,6 +58,7 @@ export function useEditFoodItemVM(id: number) {
     const [newPortion, setNewPortion] = useState<PortionPrice>({ portion: "", price: "" });
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const [existingAttachments, setExistingAttachments] = useState<ExistingAttachment[]>([]);
+    const [removedAttachments, setRemovedAttachments] = useState<string[]>([]);
     const [initialFormData, setInitialFormData] = useState<typeof formData | null>(null);
     const [initialAttachments, setInitialAttachments] = useState<ExistingAttachment[]>([]);
 
@@ -126,7 +127,12 @@ export function useEditFoodItemVM(id: number) {
         if (!formData.name.trim()) errors.name = "Item name is required";
         if (!formData.category) errors.category = "Category is required";
         if (!formData.details) errors.details = "Description is required";
-        if (formData.ingredients.length === 0) errors.ingredients = "At least one ingredient is required";
+
+        if (formData.ingredients.length === 0) {
+            errors.ingredients = "At least one ingredient is required";
+        } else {
+
+        }
 
         const validPortions = formData.portionPrices.filter(p => p.portion && p.price);
         if (validPortions.length === 0) errors.portions = "At least one portion with price is required";
@@ -166,11 +172,32 @@ export function useEditFoodItemVM(id: number) {
 
     const handleAddIngredient = () => {
         if (ingredientInput.trim()) {
-            const newIngredients = ingredientInput.split(",").map(i => i.trim()).filter(i => i.length > 0).map(i => i.charAt(0).toUpperCase() + i.slice(1).toLowerCase());
+            const inputIngredients = ingredientInput
+                .split(",")
+                .map(i => i.trim())
+                .filter(i => i.length > 0);
+
+            const duplicates = inputIngredients.filter(i =>
+                formData.ingredients.includes(i.charAt(0).toUpperCase() + i.slice(1).toLowerCase())
+            );
+
+            if (duplicates.length > 0) {
+                setFormErrors(prev => ({
+                    ...prev,
+                    ingredients: "Duplicate ingredients are not allowed",
+                }));
+                return;
+            }
+
+            const newIngredients = inputIngredients
+                .map(i => i.charAt(0).toUpperCase() + i.slice(1).toLowerCase());
+
             setFormData(prev => ({
                 ...prev,
                 ingredients: [...prev.ingredients, ...newIngredients],
             }));
+
+            setFormErrors(prev => ({ ...prev, ingredients: "" }));
             setIngredientInput("");
         }
     };
@@ -247,7 +274,14 @@ export function useEditFoodItemVM(id: number) {
     };
 
     const handleRemoveExisting = (index: number) => {
-        setExistingAttachments(prev => prev.filter((_, i) => i !== index));
+        setExistingAttachments((prev) => {
+            const removed = prev[index];
+            const fileName = removed.url.split("/").pop(); // get only the filename
+            if (fileName) {
+                setRemovedAttachments((prevRemoved) => [...prevRemoved, fileName]);
+            }
+            return prev.filter((_, i) => i !== index);
+        })
     };
 
     const toggleAvailable = () => {
@@ -260,8 +294,6 @@ export function useEditFoodItemVM(id: number) {
     };
 
     const resetForm = () => {
-        const confirmed = window.confirm("Are you sure you want to reset the form?");
-        if (!confirmed) return;
         setFormData({
             name: "",
             category: "" as FoodCategory,
@@ -287,28 +319,23 @@ export function useEditFoodItemVM(id: number) {
 
     const handleSubmit = async (id: number) => {
         const isValid = validateForm();
-        if (!isValid) {
-            // toast.error("Please fill in all required fields.");
-            return false;
-        }
+        if (!isValid) return false;
 
-        const currentAttachments = existingAttachments;
-        const initialAttachmentsNames = initialAttachments.map(a => a.url.split("/").pop());
-        const currentAttachmentsNames = currentAttachments.map(a => a.url.split("/").pop());
+        const currentAttachmentNames = existingAttachments.map(a => a.url.split("/").pop()); // get only the filename
+        const initialAttachmentNames = initialAttachments.map(a => a.url.split("/").pop()); // get only the filename
 
         const isSameFormData = isEqual(formData, initialFormData);
-        const isSameAttachments = isEqual(currentAttachmentsNames, initialAttachmentsNames);
+        const isSameAttachments = isEqual(currentAttachmentNames, initialAttachmentNames);
         const isSameFiles = selectedFiles.length === 0;
 
         if (isSameFormData && isSameAttachments && isSameFiles) {
-            toast("No changes detected. Nothing to update.");
+            toast("No changes detected.", { icon: "ℹ️" });
             return true;
         }
 
         setLoading(true);
         try {
             const formPayload = new FormData();
-
             formPayload.append("item_title", formData.name);
             formPayload.append("category_id_int", String(Number(formData.category)));
             formPayload.append("item_description", formData.details);
@@ -316,25 +343,18 @@ export function useEditFoodItemVM(id: number) {
             formPayload.append("is_item_available_for_order", String(formData.available));
             formPayload.append("item_ingredient", JSON.stringify(formData.ingredients));
 
-            const filteredPortions = formData.portionPrices.filter(
-                (p) => p.portion.trim() !== "" && p.price.trim() !== ""
-            );
+            const validPortions = formData.portionPrices.filter(p => p.portion.trim() && p.price.trim());
+            formPayload.append("portions", JSON.stringify(validPortions.map(p => ({
+                portion_title: p.portion,
+                portion_price: Number(p.price),
+            }))));
 
-            formPayload.append(
-                "portions",
-                JSON.stringify(
-                    filteredPortions.map(p => ({
-                        portion_title: p.portion,
-                        portion_price: Number(p.price),
-                    }))
-                )
-            );
+            // Attach existing file names (to retain)
+            formPayload.append("existing_attachments", JSON.stringify(currentAttachmentNames));
 
-            formPayload.append(
-                "existing_attachments",
-                JSON.stringify(existingAttachments.map(a => a.url.split("/").pop()))
-            );
+            formPayload.append("removed_attachments", JSON.stringify(removedAttachments));
 
+            // Append new files (images/videos)
             selectedFiles.forEach(file => {
                 formPayload.append("files", file);
             });
@@ -343,8 +363,8 @@ export function useEditFoodItemVM(id: number) {
             toast.success("Food Item Updated Successfully!");
             return true;
         } catch (error) {
+            console.error("Update failed:", error);
             toast.error("Food Item Update Failed!");
-            console.error(error);
             return false;
         } finally {
             setLoading(false);

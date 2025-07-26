@@ -94,33 +94,6 @@ export function useFoodItemVM() {
         fetchData();
     }, [fetchData]);
 
-    // const handleDelete = async (id: number) => {
-    //     if (!confirm("Are you sure you want to delete this item?")) return;
-    //     try {
-    //         await deleteFoodItem(id);
-    //         toast.success("Item deleted successfully");
-    //         fetchData();
-    //     } catch (err) {
-    //         console.error(err);
-    //         toast.error("Failed to delete item");
-    //     }
-    // };
-
-    // const handleToggle = async (id: number) => {
-    //     const foodItem = foodList.find((item) => item.id === id);
-    //     if (!foodItem) return;
-
-    //     const newAvailability = !foodItem.available;
-    //     try {
-    //         await updateAvailability(id, newAvailability);
-    //         toast.success(`Food Item marked as ${newAvailability ? "Available" : "Unavailable"}`);
-    //         fetchData();
-    //     } catch (err) {
-    //         console.error(err);
-    //         toast.error("Failed to update availability");
-    //     }
-    // };
-
     const promptToggle = (id: number, title: string, currentStatus: boolean) => {
         setConfirmToggleId(id);
         setToggleStatus(currentStatus);

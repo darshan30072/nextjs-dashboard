@@ -94,7 +94,8 @@ export function useCategoriesVM() {
         if (!value) return;
 
         const current = categories.find(c => c.id_int === id);
-        if (current && current.title.toUpperCase() === value) {
+        if (current && current.title.trim().toUpperCase() === value) {
+            toast("No changes detected.", { icon: "ℹ️" });
             setEditId(null);
             setEditInput("");
             return;

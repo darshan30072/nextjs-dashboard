@@ -20,7 +20,7 @@ export default function DashboardPage() {
     };
 
     return (
-        <div className="p-4 sm:p-5 overflow-y-auto [&::-webkit-scrollbar]:hidden scrollbar-hide">
+        <div className="p-4 sm:p-5 overflow-y-auto">
             {statsLoading ? (
                 <div className="flex justify-center items-center min-h-[80vh] font-semibold">
                     <Loader message="Loading Stats..." />

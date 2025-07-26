@@ -56,14 +56,16 @@ export async function addFoodItem(formData: {
 }
 
 export async function updateFoodItem(id: number, formData: FormData) {
-  for(const [key, val] of formData.entries()) {
+  for (const [key, val] of formData.entries()) {
     if (val instanceof File) {
       console.log(`${key} => FIle:`, val.name, val.type, val.size);
     } else {
       console.log(`${key} =>`, val);
     }
   }
-  const res = await axiosInstance.put(`/v1/restaurant/update-item/${id}`, formData);
+  const res = await axiosInstance.put(`/v1/restaurant/update-item/${id}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
   return res.data;
 }
 
