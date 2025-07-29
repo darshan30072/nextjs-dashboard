@@ -19,7 +19,6 @@ export function useNavLinksVM() {
   const pathname = usePathname();
 
   const links: NavLinkItem[] = [
-    // {name: '', href: '/', icon: '', isActive: pathname === '/'},
     { name: 'Dashboard', href: '/dashboard', icon: React.createElement(GoHomeFill), isActive: pathname === '/dashboard' },
     { name: 'Orders', href: '/orders', icon: React.createElement(PiShoppingCartSimpleFill), isActive: pathname === '/orders' },
     { name: 'Categories', href: '/categories', icon: React.createElement(BiSolidCategory), isActive: pathname === '/categories' },

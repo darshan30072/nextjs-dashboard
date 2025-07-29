@@ -1,4 +1,4 @@
-// src/viewmodels/auth/forgot-password.vm.ts
+'use client';
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";

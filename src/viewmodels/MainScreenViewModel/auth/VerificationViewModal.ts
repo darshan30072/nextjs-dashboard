@@ -1,4 +1,4 @@
-// src/viewmodels/auth/verification.vm.ts
+'use client';
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";

@@ -1,4 +1,5 @@
-// src/viewmodels/auth/newPassword.vm.ts
+'use client';
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";

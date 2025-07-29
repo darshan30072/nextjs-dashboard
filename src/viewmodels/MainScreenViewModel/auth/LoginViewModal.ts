@@ -1,4 +1,5 @@
-// src/viewmodels/auth/login.vm.ts
+"use client";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";

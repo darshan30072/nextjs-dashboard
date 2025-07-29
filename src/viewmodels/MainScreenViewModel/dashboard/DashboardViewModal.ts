@@ -17,11 +17,10 @@ export function useDashboardVM() {
     useEffect(() => {
         const fetchData = async () => {
             try {
+                setStatsLoading(false);
             } catch (error) {
                 console.error("Failed to fetch stats", error);
-            } finally {
-                setStatsLoading(false);
-            }
+            }  
         };
 
         fetchData();
@@ -30,6 +29,5 @@ export function useDashboardVM() {
     return {
         statsLoading,
         stats,
-        // pendingOrders
     };
 }

@@ -1,9 +1,11 @@
 'use client';
 
 import Loader from "@/components/loader";
-import { FaCartShopping } from "react-icons/fa6";
-import { PiForkKnifeFill } from "react-icons/pi";
+import dynamic from 'next/dynamic';
 import { useDashboardVM } from "@/viewmodels/MainScreenViewModel/dashboard/DashboardViewModal";
+
+const FaCartShopping = dynamic(() => import('react-icons/fa6').then(mod => mod.FaCartShopping), { ssr: false });
+const PiForkKnifeFill = dynamic(() => import('react-icons/pi').then(mod => mod.PiForkKnifeFill), { ssr: false });
 
 export default function DashboardPage() {
     const { statsLoading, stats } = useDashboardVM();

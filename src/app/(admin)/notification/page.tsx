@@ -1,7 +1,7 @@
 'use client';
 
 import NotificationItemCard from "@/components/notifications/notificationCard";
-import { useNotificationVM } from "@/viewmodels/MainScreenViewModel/notification/notificationViewModel";
+import { useNotificationVM } from "@/viewmodels/ComponentViewModel/notification/notificationViewModel";
 
 export default function Notification() {
   const { notifications } = useNotificationVM();

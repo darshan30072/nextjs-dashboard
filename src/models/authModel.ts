@@ -1,5 +1,3 @@
-// src/models/auth.model.ts
-
 // ---- Login ----
 export interface LoginPayload {
     email: string;
